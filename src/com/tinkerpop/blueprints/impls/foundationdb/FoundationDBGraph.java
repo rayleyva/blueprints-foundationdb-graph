@@ -1,5 +1,7 @@
 package com.tinkerpop.blueprints.impls.foundationdb;
 
+import java.util.ArrayList;
+
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Features;
 import com.tinkerpop.blueprints.Graph;
@@ -7,6 +9,8 @@ import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.foundationdb.Database;
 import com.foundationdb.FDB;
+import com.foundationdb.Transaction;
+import com.foundationdb.tuple.Tuple;
 
 public class FoundationDBGraph implements Graph {
 	
@@ -23,7 +27,7 @@ public class FoundationDBGraph implements Graph {
         FEATURES.supportsEdgeIteration = false;
         FEATURES.supportsVertexIndex = false;
         FEATURES.supportsEdgeIndex = false;
-        FEATURES.ignoresSuppliedIds = false;
+        FEATURES.ignoresSuppliedIds = true;
         FEATURES.supportsEdgeRetrieval = false;
         FEATURES.supportsVertexProperties = false;
         FEATURES.supportsEdgeProperties = false;
@@ -51,7 +55,7 @@ public class FoundationDBGraph implements Graph {
     }
 	
 	public FoundationDBGraph() {
-		this("myGraph");
+		new FoundationDBGraph("myGraph");
 	}
 	
 	public FoundationDBGraph(String graphName) {
@@ -67,49 +71,58 @@ public class FoundationDBGraph implements Graph {
 	@Override
 	public Edge addEdge(Object arg0, Vertex arg1, Vertex arg2, String arg3) {
 		// TODO Auto-generated method stub
-		return null;
+		return new FoundationDBEdge();
 	}
 
 	@Override
 	public Vertex addVertex(Object arg0) {
-		// TODO Auto-generated method stub
-		return null;
+		Vertex v = new FoundationDBVertex(db);
+		Transaction tr = db.createTransaction();
+		Tuple t = new Tuple();
+		t.add("/v/").add(arg0.toString());
+		tr.set(t.pack(), "1".getBytes());
+		tr.commit();
+		return v;
 	}
 
 	@Override
 	public Edge getEdge(Object arg0) {
 		// TODO Auto-generated method stub
-		return null;
+		return new FoundationDBEdge();
 	}
 
 	@Override
 	public Iterable<Edge> getEdges() {
 		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<Edge>();
 	}
 
-	@Override
 	public Iterable<Edge> getEdges(String arg0, Object arg1) {
 		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<Edge>();
 	}
 
 	@Override
-	public Vertex getVertex(Object arg0) {
+	public Vertex getVertex(Object id) {
 		// TODO Auto-generated method stub
-		return null;
+//		Transaction tr = db.createTransaction();
+//		tr.get(id.toString().getBytes())
+		if (id == null) throw new IllegalArgumentException();
+		FoundationDBVertex v = new FoundationDBVertex(db, id);
+		if (v.exists()) return v;
+		else return null;
 	}
 
 	@Override
 	public Iterable<Vertex> getVertices() {
 		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<Vertex>();
 	}
 
 	@Override
 	public Iterable<Vertex> getVertices(String arg0, Object arg1) {
 		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<Vertex>();
 	}
 
 	@Override
@@ -130,8 +143,19 @@ public class FoundationDBGraph implements Graph {
 		
 	}
 
-	public void shutdown() {
-		fdb.dispose();		
+	@Override
+	public String toString() {
+		return "foundationdbgraph [graphName=" + graphName + "]";
 	}
+
+	public void shutdown() {
+		Transaction tr = db.createTransaction();
+		byte[] zero = new byte[1];
+		zero[0] = 0;
+		tr.clearRangeStartsWith(zero);
+		tr.commit();
+	}
+	
+
 
 }

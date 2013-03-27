@@ -1,10 +1,14 @@
 package com.tinkerpop.blueprints.impls.foundationdb;
 
+import com.tinkerpop.blueprints.*;
+
 public class FoundationDBGraphMain {
 
 	public static void main(String[] args) {
 	
-		(new FoundationDBGraph()).shutdown();
+		FoundationDBGraph g = new FoundationDBGraph();
+		Vertex v = g.addVertex("foo");
+		g.shutdown();
 		
 	}
 	
