@@ -87,7 +87,7 @@ public class FoundationDBGraphTest extends GraphTest {
     }
 
 	@Override
-	public Graph generateGraph(String arg0) {
-		return new FoundationDBGraph();
+	public Graph generateGraph(String graphName) {
+		return new FoundationDBGraph(graphName);
 	}
 }

@@ -6,7 +6,7 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 
-public class FoundationDBEdge implements Edge {
+public class FoundationDBEdge extends FoundationDBElement implements Edge {
 
 	@Override
 	public Object getId() {

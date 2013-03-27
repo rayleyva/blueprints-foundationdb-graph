@@ -5,9 +5,14 @@ import com.tinkerpop.blueprints.Features;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Vertex;
+import com.foundationdb.Database;
+import com.foundationdb.FDB;
 
 public class FoundationDBGraph implements Graph {
 	
+	public Database db;
+	private FDB fdb;
+	protected String graphName;
 	public static final Features FEATURES = new Features();
 	
 	static {
@@ -38,11 +43,26 @@ public class FoundationDBGraph implements Graph {
         FEATURES.supportsStringProperty = false;
 
         FEATURES.isWrapper = false;
+        FEATURES.isRDFModel = false;
         FEATURES.supportsKeyIndices = false;
         FEATURES.supportsVertexKeyIndex = false;
         FEATURES.supportsEdgeKeyIndex = false;
         FEATURES.supportsThreadedTransactions = false;
     }
+	
+	public FoundationDBGraph() {
+		this("myGraph");
+	}
+	
+	public FoundationDBGraph(String graphName) {
+		this.graphName = graphName;
+		this.fdb = FDB.selectAPIVersion(21);
+		this.db = fdb.open().get();
+	}
+	
+	public Features getFeatures() {
+		return FEATURES;
+	}
 
 	@Override
 	public Edge addEdge(Object arg0, Vertex arg1, Vertex arg2, String arg3) {
@@ -72,11 +92,6 @@ public class FoundationDBGraph implements Graph {
 	public Iterable<Edge> getEdges(String arg0, Object arg1) {
 		// TODO Auto-generated method stub
 		return null;
-	}
-
-	@Override
-	public Features getFeatures() {
-		return FEATURES;
 	}
 
 	@Override
@@ -115,10 +130,8 @@ public class FoundationDBGraph implements Graph {
 		
 	}
 
-	@Override
 	public void shutdown() {
-		// TODO Auto-generated method stub
-		
+		fdb.dispose();		
 	}
 
 }
