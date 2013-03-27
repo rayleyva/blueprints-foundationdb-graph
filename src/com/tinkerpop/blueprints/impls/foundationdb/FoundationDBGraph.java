@@ -55,7 +55,7 @@ public class FoundationDBGraph implements Graph {
     }
 	
 	public FoundationDBGraph() {
-		new FoundationDBGraph("myGraph");
+		this("myGraph");
 	}
 	
 	public FoundationDBGraph(String graphName) {
@@ -75,12 +75,12 @@ public class FoundationDBGraph implements Graph {
 	}
 
 	@Override
-	public Vertex addVertex(Object arg0) {
-		Vertex v = new FoundationDBVertex(db);
+	public FoundationDBVertex addVertex(Object id) {
+		FoundationDBVertex v = new FoundationDBVertex(db, id);
 		Transaction tr = db.createTransaction();
 		Tuple t = new Tuple();
-		t.add("/v/").add(arg0.toString());
-		tr.set(t.pack(), "1".getBytes());
+		t.add("/v/").add(v.id.toString());
+		tr.set(v.getId().toString().getBytes(), "1".getBytes());
 		tr.commit();
 		return v;
 	}
@@ -103,10 +103,7 @@ public class FoundationDBGraph implements Graph {
 	}
 
 	@Override
-	public Vertex getVertex(Object id) {
-		// TODO Auto-generated method stub
-//		Transaction tr = db.createTransaction();
-//		tr.get(id.toString().getBytes())
+	public FoundationDBVertex getVertex(Object id) {
 		if (id == null) throw new IllegalArgumentException();
 		FoundationDBVertex v = new FoundationDBVertex(db, id);
 		if (v.exists()) return v;

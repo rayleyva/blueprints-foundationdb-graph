@@ -8,17 +8,21 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.VertexQuery;
 import com.foundationdb.tuple.Tuple;
 import com.foundationdb.Database;
+import com.foundationdb.Transaction;
 
 public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	
+	Database db;
 
 	public FoundationDBVertex(Database db, Object vID) {
 		super();
-		this.id = vID;
+		if (vID != null) this.id = vID;
+		this.db = db;
 	}
 	
 	public FoundationDBVertex(Database db) {
 		super();
+		this.db = db;
 	}
 
 	@Override
@@ -81,7 +85,9 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	}
 	
 	public boolean exists() {
-		return true;
+		Transaction tr = db.createTransaction();
+//		return tr.get(new Tuple().add("/v/").add(this.id.toString()).pack()).get() != null;
+		return tr.get(this.getId().toString().getBytes()).get() != null;
 	}
 	
 	@Override
