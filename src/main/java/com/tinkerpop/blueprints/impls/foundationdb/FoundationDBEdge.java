@@ -13,41 +13,6 @@ public class FoundationDBEdge extends FoundationDBElement implements Edge {
     }
 
 	@Override
-	public String getId() {
-		return this.id;
-	}
-
-	@Override
-	public <T> T getProperty(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Set<String> getPropertyKeys() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void remove() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public <T> T removeProperty(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setProperty(String arg0, Object arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public String getLabel() {
 		// TODO Auto-generated method stub
 		return null;
