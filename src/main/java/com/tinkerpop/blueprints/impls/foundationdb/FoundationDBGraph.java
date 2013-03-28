@@ -80,15 +80,8 @@ public class FoundationDBGraph implements Graph {
 		if (id != null) v = new FoundationDBVertex(id.toString());
         else v = new FoundationDBVertex();
 		Transaction tr = db.createTransaction();
-		Tuple t = new Tuple();
-		t.add("/v/").add(v.getId());
-		tr.set(v.getId().toString().getBytes(), "1".getBytes());
-		try {
-            tr.commit().get();
-        }
-        catch (Exception ex) {
-
-        }
+		tr.set(graphPrefix().add("v").add(v.getId()).pack(), "1".getBytes());
+        tr.commit().get();
 		return v;
 	}
 
@@ -120,7 +113,7 @@ public class FoundationDBGraph implements Graph {
     private Boolean hasVertex(Vertex v) {
         Transaction tr = db.createTransaction();
 //		return tr.get(new Tuple().add("/v/").add(this.getId()).pack()).get() != null;
-        return tr.get(v.getId().toString().getBytes()).get() != null;
+        return tr.get(graphPrefix().add("v").add(v.getId().toString()).pack()).get() != null;
     }
 
 	@Override
@@ -162,9 +155,13 @@ public class FoundationDBGraph implements Graph {
 		Transaction tr = db.createTransaction();
 		byte[] zero = new byte[1];
 		zero[0] = 0;
-		tr.clearRangeStartsWith(zero);
-		tr.commit();
+		tr.clearRangeStartsWith(graphPrefix().pack());
+		tr.commit().get();
 	}
+
+    private Tuple graphPrefix() {
+        return new Tuple().add(0).add(this.graphName);
+    }
 	
 
 
