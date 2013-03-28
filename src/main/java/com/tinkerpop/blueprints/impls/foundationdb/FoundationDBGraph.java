@@ -21,9 +21,9 @@ public class FoundationDBGraph implements Graph {
 	static {
         FEATURES.supportsDuplicateEdges = true;
         FEATURES.supportsSelfLoops = true;
-        FEATURES.isPersistent = true;
+        FEATURES.isPersistent = false;
         FEATURES.supportsVertexIteration = true;
-        FEATURES.supportsEdgeIteration = false;
+        FEATURES.supportsEdgeIteration = true;
         FEATURES.supportsVertexIndex = false;
         FEATURES.supportsEdgeIndex = false;
         FEATURES.ignoresSuppliedIds = false;
@@ -111,7 +111,13 @@ public class FoundationDBGraph implements Graph {
 
 	@Override
 	public Iterable<Edge> getEdges() {
-		throw new UnsupportedOperationException();
+        List<Edge> edges = new ArrayList<Edge>();
+        Transaction tr = db.createTransaction();
+        List<KeyValue> keyValueList = tr.getRangeStartsWith(graphPrefix().add("e").pack()).asList().get();
+        for (KeyValue kv: keyValueList) {
+            edges.add(new FoundationDBEdge(this, Tuple.fromBytes(kv.getKey()).getString(3)));
+        }
+        return edges;
 	}
 
 	public Iterable<Edge> getEdges(String arg0, Object arg1) {

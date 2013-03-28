@@ -70,8 +70,9 @@ public class FoundationDBGraphTest extends GraphTest {
 //        printTestPerformance("GraphSONReaderTestSuite", this.stopWatch());
 //    }
 
+    @Override
     public Graph generateGraph() {
-        FoundationDBGraph g = new FoundationDBGraph();
+        FoundationDBGraph g = new FoundationDBGraph("graphTest");
         g.purge();
         return g;
     }
