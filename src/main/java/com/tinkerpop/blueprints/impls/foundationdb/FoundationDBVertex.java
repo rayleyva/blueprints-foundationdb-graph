@@ -34,10 +34,8 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
         else  {
             ArrayList<Edge> inEdges = getDirectionEdges("in", labels);
             ArrayList<Edge> outEdges = getDirectionEdges("out", labels);
-            HashSet<Edge> edges = new HashSet<Edge>();
-            edges.addAll(inEdges);
-            edges.addAll(outEdges);
-            return edges;
+            inEdges.addAll(outEdges);
+            return inEdges;
         }
 	}
 
@@ -61,7 +59,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
         else {
             ArrayList<Edge> inEdges = getDirectionEdges("in", labels);
             ArrayList<Edge> outEdges = getDirectionEdges("out", labels);
-            vertices = new HashSet<Vertex>();
+            vertices = new ArrayList<Vertex>();
             for (Edge e : inEdges) {
                 vertices.add(e.getVertex(Direction.OUT));
             }
