@@ -34,7 +34,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
         else  {
             ArrayList<Edge> inEdges = getDirectionEdges("in", labels);
             ArrayList<Edge> outEdges = getDirectionEdges("out", labels);
-            TreeSet<Edge> edges = new TreeSet<Edge>();
+            HashSet<Edge> edges = new HashSet<Edge>();
             edges.addAll(inEdges);
             edges.addAll(outEdges);
             return edges;
@@ -43,8 +43,33 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 
 	@Override
 	public Iterable<Vertex> getVertices(Direction direction, String... labels) {
-		// TODO Auto-generated method stub
-		return null;
+		Collection<Vertex> vertices;
+        if (direction.equals(Direction.IN)) {
+            ArrayList<Edge> edges = getDirectionEdges("in", labels);
+            vertices = new ArrayList<Vertex>();
+            for (Edge e : edges) {
+                vertices.add(e.getVertex(Direction.OUT));
+            }
+        }
+        else if (direction.equals(Direction.OUT)) {
+            ArrayList<Edge> edges = getDirectionEdges("out", labels);
+            vertices = new ArrayList<Vertex>();
+            for (Edge e : edges) {
+                vertices.add(e.getVertex(Direction.IN));
+            }
+        }
+        else {
+            ArrayList<Edge> inEdges = getDirectionEdges("in", labels);
+            ArrayList<Edge> outEdges = getDirectionEdges("out", labels);
+            vertices = new HashSet<Vertex>();
+            for (Edge e : inEdges) {
+                vertices.add(e.getVertex(Direction.OUT));
+            }
+            for (Edge e : outEdges) {
+                vertices.add(e.getVertex(Direction.IN));
+            }
+        }
+        return vertices;
 	}
 
 	@Override
