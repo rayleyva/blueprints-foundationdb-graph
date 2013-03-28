@@ -28,7 +28,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	}
 
 	@Override
-	public Iterable<Edge> getEdges(Direction arg0, String... arg1) {
+	public Iterable<Edge> getEdges(Direction direction, String... arg1) {
 		// TODO Auto-generated method stub
 		return null;
 	}

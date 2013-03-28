@@ -69,9 +69,26 @@ public class FoundationDBGraph implements Graph {
 	}
 
 	@Override
-	public Edge addEdge(Object arg0, Vertex arg1, Vertex arg2, String arg3) {
-		// TODO Auto-generated method stub
-		return new FoundationDBEdge(this);
+	public Edge addEdge(Object id, Vertex outVertex, Vertex inVertex, String label) {
+		FoundationDBEdge e;
+        if (id != null) e = new FoundationDBEdge(this, id.toString());
+        else e = new FoundationDBEdge(this);
+        Transaction tr = db.createTransaction();
+        tr.set(graphPrefix().add("e").add(e.getId()).pack(), label.getBytes());
+        tr.set(graphPrefix().add("in").add(e.getId()).pack(), inVertex.getId().toString().getBytes());
+        tr.set(graphPrefix().add("out").add(e.getId()).pack(), outVertex.getId().toString().getBytes());
+        byte[] existingInEdgesByte = tr.get(graphPrefix().add("in").add(inVertex.getId().toString()).pack()).get();
+        byte[] existingOutEdgesByte = tr.get(graphPrefix().add("out").add(outVertex.getId().toString()).pack()).get();
+        Tuple existingInEdges;
+        Tuple existingOutEdges;
+        if (existingInEdgesByte != null) existingInEdges = Tuple.fromBytes(existingInEdgesByte);
+        else existingInEdges = new Tuple();
+        if (existingOutEdgesByte != null) existingOutEdges = Tuple.fromBytes(existingOutEdgesByte);
+        else existingOutEdges = new Tuple();
+        tr.set(graphPrefix().add("in").add(inVertex.getId().toString()).pack(), existingInEdges.add(e.getId().getBytes()).pack());
+        tr.set(graphPrefix().add("out").add(outVertex.getId().toString()).pack(), existingOutEdges.add(e.getId().getBytes()).pack());
+        tr.commit().get();
+        return e;
 	}
 
 	@Override
@@ -86,9 +103,11 @@ public class FoundationDBGraph implements Graph {
 	}
 
 	@Override
-	public Edge getEdge(Object arg0) {
-		// TODO Auto-generated method stub
-		return new FoundationDBEdge(this);
+	public Edge getEdge(Object id) {
+        if (id == null) throw new IllegalArgumentException();
+        FoundationDBEdge e = new FoundationDBEdge(this, id.toString());
+        if (this.hasEdge(e)) return e;
+        else return null;
 	}
 
 	@Override
@@ -111,6 +130,11 @@ public class FoundationDBGraph implements Graph {
     private Boolean hasVertex(FoundationDBVertex v) {
         Transaction tr = db.createTransaction();
         return tr.get(graphPrefix().add("v").add(v.getId()).pack()).get() != null;
+    }
+
+    private Boolean hasEdge(FoundationDBEdge e) {
+        Transaction tr = db.createTransaction();
+        return tr.get(graphPrefix().add("e").add(e.getId()).pack()).get() != null;
     }
 
 	@Override
