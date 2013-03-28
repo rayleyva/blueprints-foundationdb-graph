@@ -93,13 +93,11 @@ public class FoundationDBGraph implements Graph {
 
 	@Override
 	public Iterable<Edge> getEdges() {
-		// TODO Auto-generated method stub
-		return new ArrayList<Edge>();
+		throw new UnsupportedOperationException();
 	}
 
 	public Iterable<Edge> getEdges(String arg0, Object arg1) {
-		// TODO Auto-generated method stub
-		return new ArrayList<Edge>();
+        throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -117,14 +115,12 @@ public class FoundationDBGraph implements Graph {
 
 	@Override
 	public Iterable<Vertex> getVertices() {
-		// TODO Auto-generated method stub
-		return new ArrayList<Vertex>();
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Iterable<Vertex> getVertices(String arg0, Object arg1) {
-		// TODO Auto-generated method stub
-		return new ArrayList<Vertex>();
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
