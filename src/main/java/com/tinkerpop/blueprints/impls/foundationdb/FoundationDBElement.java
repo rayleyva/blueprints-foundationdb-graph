@@ -26,6 +26,7 @@ public class FoundationDBElement implements Element {
 	public <T> T getProperty(String key) {
 		Transaction tr = g.db.createTransaction();
         byte[] bytes = tr.get(g.graphPrefix().add("p").add(this.getId()).add(key).pack()).get();
+        if (bytes == null) return null;
         return (T) new String(bytes);
 	}
 
@@ -45,9 +46,12 @@ public class FoundationDBElement implements Element {
 	}
 
 	@Override
-	public <T> T removeProperty(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
+	public <T> T removeProperty(String key) {
+        Transaction tr = g.db.createTransaction();
+		T value = this.getProperty(key);
+        tr.clearRangeStartsWith(g.graphPrefix().add("p").add(this.getId()).add(key).pack());
+        tr.commit();
+        return value;
 	}
 
 	@Override
