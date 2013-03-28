@@ -38,6 +38,11 @@ public class FoundationDBEdge extends FoundationDBElement implements Edge {
 	}
 
     @Override
+    public void remove() {
+        g.removeEdge(this);
+    }
+
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();

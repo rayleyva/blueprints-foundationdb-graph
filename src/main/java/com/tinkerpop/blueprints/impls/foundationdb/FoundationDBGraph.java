@@ -1,12 +1,9 @@
 package com.tinkerpop.blueprints.impls.foundationdb;
 
 import java.util.ArrayList;
+import java.util.List;
 
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Features;
-import com.tinkerpop.blueprints.Graph;
-import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.*;
 import com.foundationdb.Database;
 import com.foundationdb.FDB;
 import com.foundationdb.Transaction;
@@ -20,9 +17,9 @@ public class FoundationDBGraph implements Graph {
 	public static final Features FEATURES = new Features();
 	
 	static {
-        FEATURES.supportsDuplicateEdges = false;
-        FEATURES.supportsSelfLoops = false;
-        FEATURES.isPersistent = false;
+        FEATURES.supportsDuplicateEdges = true;
+        FEATURES.supportsSelfLoops = true;
+        FEATURES.isPersistent = true;
         FEATURES.supportsVertexIteration = false;
         FEATURES.supportsEdgeIteration = false;
         FEATURES.supportsVertexIndex = false;
@@ -132,9 +129,9 @@ public class FoundationDBGraph implements Graph {
         return tr.get(graphPrefix().add("v").add(v.getId()).pack()).get() != null;
     }
 
-    private Boolean hasEdge(FoundationDBEdge e) {
+    private Boolean hasEdge(Edge e) {
         Transaction tr = db.createTransaction();
-        return tr.get(graphPrefix().add("e").add(e.getId()).pack()).get() != null;
+        return tr.get(graphPrefix().add("e").add(e.getId().toString()).pack()).get() != null;
     }
 
 	@Override
@@ -154,15 +151,55 @@ public class FoundationDBGraph implements Graph {
 	}
 
 	@Override
-	public void removeEdge(Edge arg0) {
-		// TODO Auto-generated method stub
-		
+	public void removeEdge(Edge e) {
+        Transaction tr = db.createTransaction();
+        Vertex inVertex = e.getVertex(Direction.IN);
+        Vertex outVertex = e.getVertex(Direction.OUT);
+        Tuple inVertexEdges = Tuple.fromBytes(tr.get(graphPrefix().add("in").add(inVertex.getId().toString()).pack()).get());
+        Tuple outVertexEdges = Tuple.fromBytes(tr.get(graphPrefix().add("out").add(outVertex.getId().toString()).pack()).get());
+        List<Object> inVertexEdgeList = inVertexEdges.getItems();
+        List<Object> outVertexEdgeList = outVertexEdges.getItems();
+        Tuple newInTuple = new Tuple();
+        Tuple newOutTuple = new Tuple();
+        for (Object id : inVertexEdgeList) {
+            String byteString = new String((byte[]) id);
+            if (byteString.equals(e.getId().toString())) {
+
+            }
+            else {
+                newInTuple = newInTuple.add((byte[])id);
+            }
+        }
+        for (Object id : outVertexEdgeList) {
+            String byteString = new String((byte[]) id);
+            if (byteString.equals(e.getId().toString())) {
+
+            }
+            else {
+                newOutTuple = newOutTuple.add((byte[])id);
+            }
+        }
+        tr.set(graphPrefix().add("in").add(inVertex.getId().toString()).pack(), newInTuple.pack());
+        tr.set(graphPrefix().add("out").add(outVertex.getId().toString()).pack(), newOutTuple.pack());
+        tr.clearRangeStartsWith(graphPrefix().add("e").add(e.getId().toString()).pack());
+        tr.clearRangeStartsWith(graphPrefix().add("in").add(e.getId().toString()).pack());
+        tr.clearRangeStartsWith(graphPrefix().add("out").add(e.getId().toString()).pack());
+        tr.clearRangeStartsWith(graphPrefix().add("p").add(e.getId().toString()).pack());
+        tr.commit().get();
+        System.out.println();
 	}
 
 	@Override
-	public void removeVertex(Vertex arg0) {
-		// TODO Auto-generated method stub
-		
+	public void removeVertex(Vertex v) {
+		for (Edge e : v.getEdges(Direction.BOTH)) {
+            if (hasEdge(e)) this.removeEdge(e);
+        }
+        Transaction tr = db.createTransaction();
+        tr.clearRangeStartsWith(graphPrefix().add("v").add(v.getId().toString()).pack());
+        tr.clearRangeStartsWith(graphPrefix().add("in").add(v.getId().toString()).pack());
+        tr.clearRangeStartsWith(graphPrefix().add("out").add(v.getId().toString()).pack());
+        tr.clearRangeStartsWith(graphPrefix().add("p").add(v.getId().toString()).pack());
+        tr.commit().get();
 	}
 
 	@Override

@@ -41,8 +41,7 @@ public class FoundationDBElement implements Element {
 	}
 
 	public void remove() {
-		// TODO Auto-generated method stub
-		
+		throw new RuntimeException("This needs to be overrided in this implementation");
 	}
 
 	@Override

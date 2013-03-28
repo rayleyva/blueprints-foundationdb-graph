@@ -22,9 +22,8 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
     }
 
 	@Override
-	public Edge addEdge(String arg0, Vertex arg1) {
-		// TODO Auto-generated method stub
-		return null;
+	public Edge addEdge(String label, Vertex inVertex) {
+	    return g.addEdge(null, this, inVertex, label);
 	}
 
 	@Override
@@ -101,6 +100,11 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
             }
         }
         return edges;
+    }
+
+    @Override
+    public void remove() {
+        g.removeVertex(this);
     }
 
 	
