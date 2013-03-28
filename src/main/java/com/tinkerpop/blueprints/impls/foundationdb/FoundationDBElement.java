@@ -27,7 +27,13 @@ public class FoundationDBElement implements Element {
 		Transaction tr = g.db.createTransaction();
         byte[] bytes = tr.get(g.graphPrefix().add("p").add(this.getId()).add(key).pack()).get();
         if (bytes == null) return null;
-        return (T) new String(bytes);
+        Tuple t = Tuple.fromBytes(bytes);
+        String valueType = t.getString(0);
+        if (valueType.equals("string")) return (T) t.getString(1);
+        else if (valueType.equals("integer")) return (T) new Integer((new Long(t.getLong(1))).intValue());
+        else if (valueType.equals("long")) return (T) t.get(1);
+        else if (valueType.equals("boolean")) return (T) t.get(1);
+        else throw new IllegalStateException();
 	}
 
 	@Override
@@ -56,11 +62,41 @@ public class FoundationDBElement implements Element {
 
 	@Override
 	public void setProperty(String key, Object value) {
-        if (!(value instanceof String)) throw new IllegalArgumentException();
+        if (!(value instanceof String || value instanceof Integer || value instanceof Long || value instanceof Boolean)) throw new IllegalArgumentException();
         if (key.equals("") || key.toLowerCase().equals("id") || key.toLowerCase().equals("label") || key == null) throw new IllegalArgumentException();
-        Transaction tr = g.db.createTransaction();
-        tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), value.toString().getBytes());
-        tr.commit().get();
+        String valueType;
+        if (value instanceof String) {
+            valueType = "string";
+            String rawValue = (String) value;
+            Transaction tr = g.db.createTransaction();
+            tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), new Tuple().add(valueType).add(rawValue).pack());
+            tr.commit().get();
+        }
+        else if (value instanceof Integer) {
+            valueType = "integer";
+            Number rawValue = (Number) value;
+            Transaction tr = g.db.createTransaction();
+            tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), new Tuple().add(valueType).addObject(rawValue).pack());
+            tr.commit().get();
+        }
+        else if (value instanceof Long) {
+            valueType = "long";
+            Number rawValue = (Number) value;
+            Transaction tr = g.db.createTransaction();
+            tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), new Tuple().add(valueType).addObject(rawValue).pack());
+            tr.commit().get();
+        }
+        else if (value instanceof Boolean) {
+            valueType = "boolean";
+            int rawValue;
+            if (value == Boolean.TRUE) rawValue = 1;
+            else rawValue = 0;
+            Transaction tr = g.db.createTransaction();
+            tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), new Tuple().add(valueType).add(rawValue).pack());
+            tr.commit().get();
+        }
+        else throw new IllegalArgumentException();
+
 		
 	}
 
