@@ -71,7 +71,9 @@ public class FoundationDBGraphTest extends GraphTest {
     }
 
     public Graph generateGraph() {
-        return new FoundationDBGraph();
+        FoundationDBGraph g = new FoundationDBGraph();
+        g.purge();
+        return g;
     }
 
     public void doTestSuite(final TestSuite testSuite) throws Exception {

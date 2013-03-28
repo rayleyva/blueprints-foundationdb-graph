@@ -3,6 +3,7 @@ package com.tinkerpop.blueprints.impls.foundationdb;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.foundationdb.KeyValue;
 import com.tinkerpop.blueprints.*;
 import com.foundationdb.Database;
 import com.foundationdb.FDB;
@@ -20,7 +21,7 @@ public class FoundationDBGraph implements Graph {
         FEATURES.supportsDuplicateEdges = true;
         FEATURES.supportsSelfLoops = true;
         FEATURES.isPersistent = true;
-        FEATURES.supportsVertexIteration = false;
+        FEATURES.supportsVertexIteration = true;
         FEATURES.supportsEdgeIteration = false;
         FEATURES.supportsVertexIndex = false;
         FEATURES.supportsEdgeIndex = false;
@@ -59,9 +60,6 @@ public class FoundationDBGraph implements Graph {
 		this.graphName = graphName;
 		this.fdb = FDB.selectAPIVersion(21);
 		this.db = fdb.open().get();
-        Transaction tr = db.createTransaction();
-        tr.clearRangeStartsWith(graphPrefix().pack());
-        tr.commit().get();
 	}
 	
 	public Features getFeatures() {
@@ -97,7 +95,7 @@ public class FoundationDBGraph implements Graph {
 		if (id != null) v = new FoundationDBVertex(this, id.toString());
         else v = new FoundationDBVertex(this);
 		Transaction tr = db.createTransaction();
-		tr.set(graphPrefix().add("v").add(v.getId()).pack(), "1".getBytes());
+		tr.set(graphPrefix().add("v").add(v.getId()).pack(), v.getId().getBytes());
         tr.commit().get();
 		return v;
 	}
@@ -139,7 +137,13 @@ public class FoundationDBGraph implements Graph {
 
 	@Override
 	public Iterable<Vertex> getVertices() {
-		throw new UnsupportedOperationException();
+        List<Vertex> vertices = new ArrayList<Vertex>();
+        Transaction tr = db.createTransaction();
+        List<KeyValue> keyValueList = tr.getRangeStartsWith(graphPrefix().add("v").pack()).asList().get();
+        for (KeyValue kv: keyValueList) {
+            vertices.add(new FoundationDBVertex(this, new String(kv.getValue())));
+        }
+        return vertices;
 	}
 
 	@Override
@@ -212,13 +216,17 @@ public class FoundationDBGraph implements Graph {
 	}
 
 	public void shutdown() {
-		Transaction tr = db.createTransaction();
-		tr.clearRangeStartsWith(graphPrefix().pack());
-		tr.commit().get();
+
 	}
 
     public Tuple graphPrefix() {
         return new Tuple().add(0).add(this.graphName);
+    }
+
+    public void purge() {
+        Transaction tr = db.createTransaction();
+        tr.clearRangeStartsWith(graphPrefix().pack());
+        tr.commit().get();
     }
 	
 
