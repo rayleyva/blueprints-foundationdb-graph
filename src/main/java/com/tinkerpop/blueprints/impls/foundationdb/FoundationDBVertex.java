@@ -11,18 +11,12 @@ import com.foundationdb.Database;
 import com.foundationdb.Transaction;
 
 public class FoundationDBVertex extends FoundationDBElement implements Vertex {
-	
-	Database db;
 
-	public FoundationDBVertex(Database db, String vID) {
-		super();
+	public FoundationDBVertex(String vID) {
 		this.id = vID;
-		this.db = db;
 	}
 	
-	public FoundationDBVertex(Database db) {
-		super();
-		this.db = db;
+	public FoundationDBVertex() {
 	}
 
 	@Override
@@ -83,12 +77,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
-	public boolean exists() {
-		Transaction tr = db.createTransaction();
-//		return tr.get(new Tuple().add("/v/").add(this.getId()).pack()).get() != null;
-		return tr.get(this.getId().toString().getBytes()).get() != null;
-	}
+
 	
 	@Override
 	public int hashCode() {

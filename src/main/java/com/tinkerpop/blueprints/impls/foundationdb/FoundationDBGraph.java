@@ -77,8 +77,8 @@ public class FoundationDBGraph implements Graph {
 	@Override
 	public FoundationDBVertex addVertex(Object id) {
         FoundationDBVertex v;
-		if (id != null) v = new FoundationDBVertex(db, id.toString());
-        else v = new FoundationDBVertex(db);
+		if (id != null) v = new FoundationDBVertex(id.toString());
+        else v = new FoundationDBVertex();
 		Transaction tr = db.createTransaction();
 		Tuple t = new Tuple();
 		t.add("/v/").add(v.getId());
@@ -112,10 +112,16 @@ public class FoundationDBGraph implements Graph {
 	@Override
 	public FoundationDBVertex getVertex(Object id) {
 		if (id == null) throw new IllegalArgumentException();
-		FoundationDBVertex v = new FoundationDBVertex(db, id.toString());
-		if (v.exists()) return v;
+		FoundationDBVertex v = new FoundationDBVertex(id.toString());
+		if (this.hasVertex(v)) return v;
 		else return null;
 	}
+
+    private Boolean hasVertex(Vertex v) {
+        Transaction tr = db.createTransaction();
+//		return tr.get(new Tuple().add("/v/").add(this.getId()).pack()).get() != null;
+        return tr.get(v.getId().toString().getBytes()).get() != null;
+    }
 
 	@Override
 	public Iterable<Vertex> getVertices() {
