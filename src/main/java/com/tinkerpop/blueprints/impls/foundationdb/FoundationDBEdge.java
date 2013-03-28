@@ -8,10 +8,13 @@ import com.tinkerpop.blueprints.Vertex;
 
 public class FoundationDBEdge extends FoundationDBElement implements Edge {
 
+    public FoundationDBEdge(FoundationDBGraph g) {
+        super(g);
+    }
+
 	@Override
 	public String getId() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.id;
 	}
 
 	@Override

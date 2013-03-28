@@ -71,14 +71,14 @@ public class FoundationDBGraph implements Graph {
 	@Override
 	public Edge addEdge(Object arg0, Vertex arg1, Vertex arg2, String arg3) {
 		// TODO Auto-generated method stub
-		return new FoundationDBEdge();
+		return new FoundationDBEdge(this);
 	}
 
 	@Override
 	public FoundationDBVertex addVertex(Object id) {
         FoundationDBVertex v;
-		if (id != null) v = new FoundationDBVertex(id.toString());
-        else v = new FoundationDBVertex();
+		if (id != null) v = new FoundationDBVertex(this, id.toString());
+        else v = new FoundationDBVertex(this);
 		Transaction tr = db.createTransaction();
 		tr.set(graphPrefix().add("v").add(v.getId()).pack(), "1".getBytes());
         tr.commit().get();
@@ -88,7 +88,7 @@ public class FoundationDBGraph implements Graph {
 	@Override
 	public Edge getEdge(Object arg0) {
 		// TODO Auto-generated method stub
-		return new FoundationDBEdge();
+		return new FoundationDBEdge(this);
 	}
 
 	@Override
@@ -105,15 +105,14 @@ public class FoundationDBGraph implements Graph {
 	@Override
 	public FoundationDBVertex getVertex(Object id) {
 		if (id == null) throw new IllegalArgumentException();
-		FoundationDBVertex v = new FoundationDBVertex(id.toString());
+		FoundationDBVertex v = new FoundationDBVertex(this, id.toString());
 		if (this.hasVertex(v)) return v;
 		else return null;
 	}
 
-    private Boolean hasVertex(Vertex v) {
+    private Boolean hasVertex(FoundationDBVertex v) {
         Transaction tr = db.createTransaction();
-//		return tr.get(new Tuple().add("/v/").add(this.getId()).pack()).get() != null;
-        return tr.get(graphPrefix().add("v").add(v.getId().toString()).pack()).get() != null;
+        return tr.get(graphPrefix().add("v").add(v.getId()).pack()).get() != null;
     }
 
 	@Override
@@ -159,7 +158,7 @@ public class FoundationDBGraph implements Graph {
 		tr.commit().get();
 	}
 
-    private Tuple graphPrefix() {
+    public Tuple graphPrefix() {
         return new Tuple().add(0).add(this.graphName);
     }
 	

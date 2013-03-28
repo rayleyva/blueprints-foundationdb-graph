@@ -3,13 +3,14 @@ package com.tinkerpop.blueprints.impls.foundationdb;
 import java.util.Set;
 import java.util.UUID;
 
+import com.foundationdb.Database;
 import com.tinkerpop.blueprints.Element;
 
 public class FoundationDBElement implements Element {
 
 	protected String id;
 	
-	public FoundationDBElement() {
+	public FoundationDBElement(FoundationDBGraph g) {
 		this.id = UUID.randomUUID().toString();
 	}
 	

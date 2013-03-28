@@ -12,12 +12,14 @@ import com.foundationdb.Transaction;
 
 public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 
-	public FoundationDBVertex(String vID) {
+	public FoundationDBVertex(FoundationDBGraph g, String vID) {
+        super(g);
 		this.id = vID;
 	}
 	
-	public FoundationDBVertex() {
-	}
+	public FoundationDBVertex(FoundationDBGraph g) {
+	    super(g);
+    }
 
 	@Override
 	public String getId() {
