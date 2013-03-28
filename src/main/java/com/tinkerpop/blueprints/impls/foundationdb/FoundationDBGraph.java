@@ -127,9 +127,9 @@ public class FoundationDBGraph implements Graph {
 		else return null;
 	}
 
-    private Boolean hasVertex(FoundationDBVertex v) {
+    private Boolean hasVertex(Vertex v) {
         Transaction tr = db.createTransaction();
-        return tr.get(graphPrefix().add("v").add(v.getId()).pack()).get() != null;
+        return tr.get(graphPrefix().add("v").add(v.getId().toString()).pack()).get() != null;
     }
 
     private Boolean hasEdge(Edge e) {
@@ -155,6 +155,7 @@ public class FoundationDBGraph implements Graph {
 
 	@Override
 	public void removeEdge(Edge e) {
+        if (!hasEdge(e)) throw new IllegalArgumentException("Edge does not exist!");
         Transaction tr = db.createTransaction();
         Vertex inVertex = e.getVertex(Direction.IN);
         Vertex outVertex = e.getVertex(Direction.OUT);
@@ -189,11 +190,11 @@ public class FoundationDBGraph implements Graph {
         tr.clearRangeStartsWith(graphPrefix().add("out").add(e.getId().toString()).pack());
         tr.clearRangeStartsWith(graphPrefix().add("p").add(e.getId().toString()).pack());
         tr.commit().get();
-        System.out.println();
 	}
 
 	@Override
 	public void removeVertex(Vertex v) {
+        if (!hasVertex(v)) throw new IllegalArgumentException("Vertex does not exist!");
 		for (Edge e : v.getEdges(Direction.BOTH)) {
             if (hasEdge(e)) this.removeEdge(e);
         }
