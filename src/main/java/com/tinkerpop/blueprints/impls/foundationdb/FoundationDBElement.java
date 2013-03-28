@@ -1,17 +1,21 @@
 package com.tinkerpop.blueprints.impls.foundationdb;
 
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import com.foundationdb.Database;
+import com.foundationdb.KeyValue;
+import com.foundationdb.Transaction;
+import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.Element;
 
 public class FoundationDBElement implements Element {
 
 	protected String id;
+    protected FoundationDBGraph g;
 	
 	public FoundationDBElement(FoundationDBGraph g) {
 		this.id = UUID.randomUUID().toString();
+        this.g = g;
 	}
 	
 	public String getId() {
@@ -19,15 +23,21 @@ public class FoundationDBElement implements Element {
 	}
 
 	@Override
-	public <T> T getProperty(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
+	public <T> T getProperty(String key) {
+		Transaction tr = g.db.createTransaction();
+        byte[] bytes = tr.get(g.graphPrefix().add("p").add(this.getId()).add(key).pack()).get();
+        return (T) new String(bytes);
 	}
 
 	@Override
 	public Set<String> getPropertyKeys() {
-		// TODO Auto-generated method stub
-		return null;
+        Transaction tr = g.db.createTransaction();
+        List<KeyValue> l = tr.getRangeStartsWith(g.graphPrefix().add("p").add(this.getId()).pack()).asList().get();
+        Set<String> keySet = new TreeSet<String>();
+        for (KeyValue kv : l) {
+            keySet.add(Tuple.fromBytes(kv.getKey()).getString(4));
+        }
+        return keySet;
 	}
 
 	public void remove() {
@@ -42,8 +52,10 @@ public class FoundationDBElement implements Element {
 	}
 
 	@Override
-	public void setProperty(String arg0, Object arg1) {
-		// TODO Auto-generated method stub
+	public void setProperty(String key, Object value) {
+        Transaction tr = g.db.createTransaction();
+        tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), value.toString().getBytes());
+        tr.commit();
 		
 	}
 
