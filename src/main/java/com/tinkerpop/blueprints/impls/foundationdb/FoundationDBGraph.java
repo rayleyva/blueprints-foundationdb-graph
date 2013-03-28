@@ -28,8 +28,8 @@ public class FoundationDBGraph implements Graph {
         FEATURES.supportsEdgeIndex = false;
         FEATURES.ignoresSuppliedIds = false;
         FEATURES.supportsEdgeRetrieval = true;
-        FEATURES.supportsVertexProperties = false;
-        FEATURES.supportsEdgeProperties = false;
+        FEATURES.supportsVertexProperties = true;
+        FEATURES.supportsEdgeProperties = true;
         FEATURES.supportsTransactions = false;
         FEATURES.supportsIndices = false;
 
@@ -120,8 +120,15 @@ public class FoundationDBGraph implements Graph {
         return edges;
 	}
 
-	public Iterable<Edge> getEdges(String arg0, Object arg1) {
-        throw new UnsupportedOperationException();
+	public Iterable<Edge> getEdges(String key, Object value) {
+        List<Edge> edges = new ArrayList<Edge>();
+        Iterable<Edge> allEdges = this.getEdges();
+        for (Edge e : allEdges) {
+            if (e.getProperty(key).equals(value)) {
+                edges.add(e);
+            }
+        }
+        return edges;
 	}
 
 	@Override
@@ -154,8 +161,15 @@ public class FoundationDBGraph implements Graph {
 	}
 
 	@Override
-	public Iterable<Vertex> getVertices(String arg0, Object arg1) {
-		throw new UnsupportedOperationException();
+	public Iterable<Vertex> getVertices(String key, Object value) {
+        List<Vertex> vertices = new ArrayList<Vertex>();
+		Iterable<Vertex> allVertices = this.getVertices();
+        for (Vertex v : allVertices) {
+            if(v.getProperty(key).equals(value)) {
+                vertices.add(v);
+            }
+        }
+        return vertices;
 	}
 
 	@Override

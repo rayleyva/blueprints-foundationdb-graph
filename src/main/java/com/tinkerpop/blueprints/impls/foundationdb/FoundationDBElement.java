@@ -52,6 +52,7 @@ public class FoundationDBElement implements Element {
 
 	@Override
 	public void setProperty(String key, Object value) {
+        if (key.equals("")) throw new IllegalArgumentException();
         Transaction tr = g.db.createTransaction();
         tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), value.toString().getBytes());
         tr.commit();
