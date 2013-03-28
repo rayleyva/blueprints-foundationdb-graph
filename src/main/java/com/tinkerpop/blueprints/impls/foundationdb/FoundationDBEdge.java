@@ -7,6 +7,11 @@ import com.tinkerpop.blueprints.Vertex;
 
 public class FoundationDBEdge extends FoundationDBElement implements Edge {
 
+    @Override
+    public String elementType() {
+        return "e";
+    }
+
     public FoundationDBEdge(FoundationDBGraph g) {
         super(g);
     }

@@ -6,13 +6,15 @@ import com.foundationdb.Database;
 import com.foundationdb.KeyValue;
 import com.foundationdb.Transaction;
 import com.foundationdb.tuple.Tuple;
+import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Vertex;
 
-public class FoundationDBElement implements Element {
+public abstract class FoundationDBElement implements Element {
 
 	protected String id;
     protected FoundationDBGraph g;
-	
+
 	public FoundationDBElement(FoundationDBGraph g) {
 		this.id = UUID.randomUUID().toString();
         this.g = g;
@@ -25,7 +27,7 @@ public class FoundationDBElement implements Element {
 	@Override
 	public <T> T getProperty(String key) {
 		Transaction tr = g.db.createTransaction();
-        byte[] bytes = tr.get(g.graphPrefix().add("p").add(this.getId()).add(key).pack()).get();
+        byte[] bytes = tr.get(this.getRawKey(key)).get();
         if (bytes == null) return null;
         Tuple t = Tuple.fromBytes(bytes);
         String valueType = t.getString(0);
@@ -41,10 +43,10 @@ public class FoundationDBElement implements Element {
 	@Override
 	public Set<String> getPropertyKeys() {
         Transaction tr = g.db.createTransaction();
-        List<KeyValue> l = tr.getRangeStartsWith(g.graphPrefix().add("p").add(this.getId()).pack()).asList().get();
+        List<KeyValue> l = tr.getRangeStartsWith(g.graphPrefix().add("p").add(this.elementType()).add(this.getId()).pack()).asList().get();
         Set<String> keySet = new TreeSet<String>();
         for (KeyValue kv : l) {
-            keySet.add(Tuple.fromBytes(kv.getKey()).getString(4));
+            keySet.add(Tuple.fromBytes(kv.getKey()).getString(5));
         }
         return keySet;
 	}
@@ -57,7 +59,7 @@ public class FoundationDBElement implements Element {
 	public <T> T removeProperty(String key) {
         Transaction tr = g.db.createTransaction();
 		T value = this.getProperty(key);
-        tr.clearRangeStartsWith(g.graphPrefix().add("p").add(this.getId()).add(key).pack());
+        tr.clearRangeStartsWith(this.getRawKey(key));
         tr.commit().get();
         return value;
 	}
@@ -67,39 +69,40 @@ public class FoundationDBElement implements Element {
         if (!(value instanceof String || value instanceof Number || value instanceof Boolean)) throw new IllegalArgumentException();
         if (key.equals("") || key.toLowerCase().equals("id") || key.toLowerCase().equals("label") || key == null) throw new IllegalArgumentException();
         String valueType;
+        byte[] rawKey = getRawKey(key);
         if (value instanceof String) {
             valueType = "string";
             String rawValue = (String) value;
             Transaction tr = g.db.createTransaction();
-            tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), new Tuple().add(valueType).add(rawValue).pack());
+            tr.set(rawKey, new Tuple().add(valueType).add(rawValue).pack());
             tr.commit().get();
         }
         else if (value instanceof Integer) {
             valueType = "integer";
             Number rawValue = (Number) value;
             Transaction tr = g.db.createTransaction();
-            tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), new Tuple().add(valueType).addObject(rawValue).pack());
+            tr.set(rawKey, new Tuple().add(valueType).addObject(rawValue).pack());
             tr.commit().get();
         }
         else if (value instanceof Long) {
             valueType = "long";
             Number rawValue = (Number) value;
             Transaction tr = g.db.createTransaction();
-            tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), new Tuple().add(valueType).addObject(rawValue).pack());
+            tr.set(rawKey, new Tuple().add(valueType).addObject(rawValue).pack());
             tr.commit().get();
         }
         else if (value instanceof Double) {
             valueType = "double";
             String rawValue = value.toString();
             Transaction tr = g.db.createTransaction();
-            tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), new Tuple().add(valueType).add(rawValue).pack());
+            tr.set(rawKey, new Tuple().add(valueType).add(rawValue).pack());
             tr.commit().get();
         }
         else if (value instanceof Float) {
             valueType = "float";
             String rawValue = value.toString();
             Transaction tr = g.db.createTransaction();
-            tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), new Tuple().add(valueType).add(rawValue).pack());
+            tr.set(rawKey, new Tuple().add(valueType).add(rawValue).pack());
             tr.commit().get();
         }
         else if (value instanceof Boolean) {
@@ -108,7 +111,7 @@ public class FoundationDBElement implements Element {
             if (value == Boolean.TRUE) rawValue = 1;
             else rawValue = 0;
             Transaction tr = g.db.createTransaction();
-            tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), new Tuple().add(valueType).add(rawValue).pack());
+            tr.set(rawKey, new Tuple().add(valueType).add(rawValue).pack());
             tr.commit().get();
         }
         else throw new IllegalArgumentException();
@@ -146,6 +149,13 @@ public class FoundationDBElement implements Element {
         if (l == 1) return Boolean.TRUE;
         throw new IllegalArgumentException();
     }
-	
+
+    public String elementType() {
+        throw new IllegalStateException();
+    }
+
+    private byte[] getRawKey(String key) {
+        return g.graphPrefix().add("p").add(this.elementType()).add(this.getId()).add(key).pack();
+    }
 
 }

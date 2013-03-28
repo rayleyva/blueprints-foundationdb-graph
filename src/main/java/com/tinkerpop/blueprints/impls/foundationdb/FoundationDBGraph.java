@@ -213,7 +213,7 @@ public class FoundationDBGraph implements Graph {
         tr.clearRangeStartsWith(graphPrefix().add("e").add(e.getId().toString()).pack());
         tr.clearRangeStartsWith(graphPrefix().add("in").add("e").add(e.getId().toString()).pack());
         tr.clearRangeStartsWith(graphPrefix().add("out").add("e").add(e.getId().toString()).pack());
-        tr.clearRangeStartsWith(graphPrefix().add("p").add(e.getId().toString()).pack());
+        tr.clearRangeStartsWith(graphPrefix().add("p").add("e").add(e.getId().toString()).pack());
         tr.commit().get();
 	}
 
@@ -227,7 +227,7 @@ public class FoundationDBGraph implements Graph {
         tr.clearRangeStartsWith(graphPrefix().add("v").add(v.getId().toString()).pack());
         tr.clearRangeStartsWith(graphPrefix().add("in").add("v").add(v.getId().toString()).pack());
         tr.clearRangeStartsWith(graphPrefix().add("out").add("v").add(v.getId().toString()).pack());
-        tr.clearRangeStartsWith(graphPrefix().add("p").add(v.getId().toString()).pack());
+        tr.clearRangeStartsWith(graphPrefix().add("p").add("v").add(v.getId().toString()).pack());
         tr.commit().get();
 	}
 
