@@ -26,12 +26,12 @@ public class FoundationDBEdge extends FoundationDBElement implements Edge {
 	public Vertex getVertex(Direction direction) throws IllegalArgumentException {
 		if (direction.equals(Direction.IN)) {
             Transaction tr = g.db.createTransaction();
-            String vertexID = new String(tr.get(g.graphPrefix().add("in").add(this.getId()).pack()).get());
+            String vertexID = new String(tr.get(g.graphPrefix().add("in").add("e").add(this.getId()).pack()).get());
             return new FoundationDBVertex(g, vertexID);
         }
         else if (direction.equals(Direction.OUT)) {
             Transaction tr = g.db.createTransaction();
-            String vertexID = new String(tr.get(g.graphPrefix().add("out").add(this.getId()).pack()).get());
+            String vertexID = new String(tr.get(g.graphPrefix().add("out").add("e").add(this.getId()).pack()).get());
             return new FoundationDBVertex(g, vertexID);
         }
         else throw new IllegalArgumentException();

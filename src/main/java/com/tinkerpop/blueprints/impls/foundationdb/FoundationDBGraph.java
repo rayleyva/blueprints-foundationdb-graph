@@ -74,18 +74,18 @@ public class FoundationDBGraph implements Graph {
         else e = new FoundationDBEdge(this);
         Transaction tr = db.createTransaction();
         tr.set(graphPrefix().add("e").add(e.getId()).pack(), label.getBytes());
-        tr.set(graphPrefix().add("in").add(e.getId()).pack(), inVertex.getId().toString().getBytes());
-        tr.set(graphPrefix().add("out").add(e.getId()).pack(), outVertex.getId().toString().getBytes());
-        byte[] existingInEdgesByte = tr.get(graphPrefix().add("in").add(inVertex.getId().toString()).pack()).get();
-        byte[] existingOutEdgesByte = tr.get(graphPrefix().add("out").add(outVertex.getId().toString()).pack()).get();
+        tr.set(graphPrefix().add("in").add("e").add(e.getId()).pack(), inVertex.getId().toString().getBytes());
+        tr.set(graphPrefix().add("out").add("e").add(e.getId()).pack(), outVertex.getId().toString().getBytes());
+        byte[] existingInEdgesByte = tr.get(graphPrefix().add("in").add("v").add(inVertex.getId().toString()).pack()).get();
+        byte[] existingOutEdgesByte = tr.get(graphPrefix().add("out").add("v").add(outVertex.getId().toString()).pack()).get();
         Tuple existingInEdges;
         Tuple existingOutEdges;
         if (existingInEdgesByte != null) existingInEdges = Tuple.fromBytes(existingInEdgesByte);
         else existingInEdges = new Tuple();
         if (existingOutEdgesByte != null) existingOutEdges = Tuple.fromBytes(existingOutEdgesByte);
         else existingOutEdges = new Tuple();
-        tr.set(graphPrefix().add("in").add(inVertex.getId().toString()).pack(), existingInEdges.add(e.getId().getBytes()).pack());
-        tr.set(graphPrefix().add("out").add(outVertex.getId().toString()).pack(), existingOutEdges.add(e.getId().getBytes()).pack());
+        tr.set(graphPrefix().add("in").add("v").add(inVertex.getId().toString()).pack(), existingInEdges.add(e.getId().getBytes()).pack());
+        tr.set(graphPrefix().add("out").add("v").add(outVertex.getId().toString()).pack(), existingOutEdges.add(e.getId().getBytes()).pack());
         tr.commit().get();
         return e;
 	}
@@ -184,8 +184,8 @@ public class FoundationDBGraph implements Graph {
         Transaction tr = db.createTransaction();
         Vertex inVertex = e.getVertex(Direction.IN);
         Vertex outVertex = e.getVertex(Direction.OUT);
-        Tuple inVertexEdges = Tuple.fromBytes(tr.get(graphPrefix().add("in").add(inVertex.getId().toString()).pack()).get());
-        Tuple outVertexEdges = Tuple.fromBytes(tr.get(graphPrefix().add("out").add(outVertex.getId().toString()).pack()).get());
+        Tuple inVertexEdges = Tuple.fromBytes(tr.get(graphPrefix().add("in").add("v").add(inVertex.getId().toString()).pack()).get());
+        Tuple outVertexEdges = Tuple.fromBytes(tr.get(graphPrefix().add("out").add("v").add(outVertex.getId().toString()).pack()).get());
         List<Object> inVertexEdgeList = inVertexEdges.getItems();
         List<Object> outVertexEdgeList = outVertexEdges.getItems();
         Tuple newInTuple = new Tuple();
@@ -208,11 +208,11 @@ public class FoundationDBGraph implements Graph {
                 newOutTuple = newOutTuple.add((byte[])id);
             }
         }
-        tr.set(graphPrefix().add("in").add(inVertex.getId().toString()).pack(), newInTuple.pack());
-        tr.set(graphPrefix().add("out").add(outVertex.getId().toString()).pack(), newOutTuple.pack());
+        tr.set(graphPrefix().add("in").add("v").add(inVertex.getId().toString()).pack(), newInTuple.pack());
+        tr.set(graphPrefix().add("out").add("v").add(outVertex.getId().toString()).pack(), newOutTuple.pack());
         tr.clearRangeStartsWith(graphPrefix().add("e").add(e.getId().toString()).pack());
-        tr.clearRangeStartsWith(graphPrefix().add("in").add(e.getId().toString()).pack());
-        tr.clearRangeStartsWith(graphPrefix().add("out").add(e.getId().toString()).pack());
+        tr.clearRangeStartsWith(graphPrefix().add("in").add("e").add(e.getId().toString()).pack());
+        tr.clearRangeStartsWith(graphPrefix().add("out").add("e").add(e.getId().toString()).pack());
         tr.clearRangeStartsWith(graphPrefix().add("p").add(e.getId().toString()).pack());
         tr.commit().get();
 	}
@@ -225,8 +225,8 @@ public class FoundationDBGraph implements Graph {
         }
         Transaction tr = db.createTransaction();
         tr.clearRangeStartsWith(graphPrefix().add("v").add(v.getId().toString()).pack());
-        tr.clearRangeStartsWith(graphPrefix().add("in").add(v.getId().toString()).pack());
-        tr.clearRangeStartsWith(graphPrefix().add("out").add(v.getId().toString()).pack());
+        tr.clearRangeStartsWith(graphPrefix().add("in").add("v").add(v.getId().toString()).pack());
+        tr.clearRangeStartsWith(graphPrefix().add("out").add("v").add(v.getId().toString()).pack());
         tr.clearRangeStartsWith(graphPrefix().add("p").add(v.getId().toString()).pack());
         tr.commit().get();
 	}

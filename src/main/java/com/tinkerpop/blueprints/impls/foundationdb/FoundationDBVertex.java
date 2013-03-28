@@ -78,7 +78,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
     private ArrayList<Edge> getDirectionEdges(final String direction, final String... labels) {
         ArrayList<Edge> edges = new ArrayList<Edge>();
         Transaction tr = g.db.createTransaction();
-        byte[] edgeBytes = tr.get(g.graphPrefix().add(direction).add(this.getId()).pack()).get();
+        byte[] edgeBytes = tr.get(g.graphPrefix().add(direction).add("v").add(this.getId()).pack()).get();
         if (edgeBytes == null) return new ArrayList<Edge>();
         else {
             List<Object> edgeIds = Tuple.fromBytes(edgeBytes).getItems();
