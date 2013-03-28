@@ -50,16 +50,17 @@ public class FoundationDBElement implements Element {
         Transaction tr = g.db.createTransaction();
 		T value = this.getProperty(key);
         tr.clearRangeStartsWith(g.graphPrefix().add("p").add(this.getId()).add(key).pack());
-        tr.commit();
+        tr.commit().get();
         return value;
 	}
 
 	@Override
 	public void setProperty(String key, Object value) {
+        if (!(value instanceof String)) throw new IllegalArgumentException();
         if (key.equals("") || key.toLowerCase().equals("id") || key.toLowerCase().equals("label") || key == null) throw new IllegalArgumentException();
         Transaction tr = g.db.createTransaction();
         tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), value.toString().getBytes());
-        tr.commit();
+        tr.commit().get();
 		
 	}
 

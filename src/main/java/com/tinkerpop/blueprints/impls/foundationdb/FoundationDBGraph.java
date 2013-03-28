@@ -43,7 +43,7 @@ public class FoundationDBGraph implements Graph {
         FEATURES.supportsMixedListProperty = false;
         FEATURES.supportsLongProperty = false;
         FEATURES.supportsMapProperty = false;
-        FEATURES.supportsStringProperty = false;
+        FEATURES.supportsStringProperty = true;
 
         FEATURES.isWrapper = false;
         FEATURES.isRDFModel = false;
@@ -124,7 +124,7 @@ public class FoundationDBGraph implements Graph {
         List<Edge> edges = new ArrayList<Edge>();
         Iterable<Edge> allEdges = this.getEdges();
         for (Edge e : allEdges) {
-            if (e.getProperty(key).equals(value)) {
+            if (value.equals(e.getProperty(key))) {
                 edges.add(e);
             }
         }
@@ -165,7 +165,7 @@ public class FoundationDBGraph implements Graph {
         List<Vertex> vertices = new ArrayList<Vertex>();
 		Iterable<Vertex> allVertices = this.getVertices();
         for (Vertex v : allVertices) {
-            if(v.getProperty(key).equals(value)) {
+            if(value.equals(v.getProperty(key))) {
                 vertices.add(v);
             }
         }
