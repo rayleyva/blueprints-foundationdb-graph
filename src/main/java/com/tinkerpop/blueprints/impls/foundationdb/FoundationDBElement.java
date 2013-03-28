@@ -32,7 +32,7 @@ public class FoundationDBElement implements Element {
         if (valueType.equals("string")) return (T) t.getString(1);
         else if (valueType.equals("integer")) return (T) new Integer((new Long(t.getLong(1))).intValue());
         else if (valueType.equals("long")) return (T) t.get(1);
-        else if (valueType.equals("boolean")) return (T) t.get(1);
+        else if (valueType.equals("boolean")) return (T) getBool(t.getLong(1));
         else throw new IllegalStateException();
 	}
 
@@ -124,6 +124,12 @@ public class FoundationDBElement implements Element {
 			return false;
 		return true;
 	}
+
+    private Boolean getBool(long l){
+        if (l == 0) return Boolean.FALSE;
+        if (l == 1) return Boolean.TRUE;
+        throw new IllegalArgumentException();
+    }
 	
 
 }
