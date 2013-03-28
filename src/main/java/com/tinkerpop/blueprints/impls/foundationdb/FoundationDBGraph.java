@@ -2,6 +2,7 @@ package com.tinkerpop.blueprints.impls.foundationdb;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import com.foundationdb.KeyValue;
 import com.tinkerpop.blueprints.*;
@@ -53,7 +54,7 @@ public class FoundationDBGraph implements Graph {
     }
 	
 	public FoundationDBGraph() {
-		this("myGraph");
+		this(UUID.randomUUID().toString());
 	}
 	
 	public FoundationDBGraph(String graphName) {
