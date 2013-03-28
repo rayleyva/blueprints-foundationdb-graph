@@ -27,7 +27,7 @@ public class FoundationDBGraph implements Graph {
         FEATURES.supportsEdgeIteration = false;
         FEATURES.supportsVertexIndex = false;
         FEATURES.supportsEdgeIndex = false;
-        FEATURES.ignoresSuppliedIds = true;
+        FEATURES.ignoresSuppliedIds = false;
         FEATURES.supportsEdgeRetrieval = false;
         FEATURES.supportsVertexProperties = false;
         FEATURES.supportsEdgeProperties = false;
