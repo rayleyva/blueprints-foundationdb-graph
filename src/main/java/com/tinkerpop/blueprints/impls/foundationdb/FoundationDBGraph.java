@@ -76,12 +76,19 @@ public class FoundationDBGraph implements Graph {
 
 	@Override
 	public FoundationDBVertex addVertex(Object id) {
-		FoundationDBVertex v = new FoundationDBVertex(db, id);
+        FoundationDBVertex v;
+		if (id != null) v = new FoundationDBVertex(db, id.toString());
+        else v = new FoundationDBVertex(db);
 		Transaction tr = db.createTransaction();
 		Tuple t = new Tuple();
-		t.add("/v/").add(v.id.toString());
+		t.add("/v/").add(v.getId());
 		tr.set(v.getId().toString().getBytes(), "1".getBytes());
-		tr.commit();
+		try {
+            tr.commit().get();
+        }
+        catch (Exception ex) {
+
+        }
 		return v;
 	}
 
@@ -105,7 +112,7 @@ public class FoundationDBGraph implements Graph {
 	@Override
 	public FoundationDBVertex getVertex(Object id) {
 		if (id == null) throw new IllegalArgumentException();
-		FoundationDBVertex v = new FoundationDBVertex(db, id);
+		FoundationDBVertex v = new FoundationDBVertex(db, id.toString());
 		if (v.exists()) return v;
 		else return null;
 	}

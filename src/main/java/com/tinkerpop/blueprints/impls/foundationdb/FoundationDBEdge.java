@@ -9,7 +9,7 @@ import com.tinkerpop.blueprints.Vertex;
 public class FoundationDBEdge extends FoundationDBElement implements Edge {
 
 	@Override
-	public Object getId() {
+	public String getId() {
 		// TODO Auto-generated method stub
 		return null;
 	}

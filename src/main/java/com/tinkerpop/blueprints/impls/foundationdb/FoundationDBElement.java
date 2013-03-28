@@ -7,13 +7,13 @@ import com.tinkerpop.blueprints.Element;
 
 public class FoundationDBElement implements Element {
 
-	protected Object id;
+	protected String id;
 	
 	public FoundationDBElement() {
-		this.id = UUID.randomUUID();
+		this.id = UUID.randomUUID().toString();
 	}
 	
-	public Object getId() {
+	public String getId() {
 		return this.id;
 	}
 

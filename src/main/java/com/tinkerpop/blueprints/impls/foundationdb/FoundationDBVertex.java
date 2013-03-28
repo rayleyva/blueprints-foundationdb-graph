@@ -14,9 +14,9 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	
 	Database db;
 
-	public FoundationDBVertex(Database db, Object vID) {
+	public FoundationDBVertex(Database db, String vID) {
 		super();
-		if (vID != null) this.id = vID;
+		this.id = vID;
 		this.db = db;
 	}
 	
@@ -26,7 +26,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	}
 
 	@Override
-	public Object getId() {
+	public String getId() {
 		return this.id;
 	}
 
@@ -86,7 +86,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	
 	public boolean exists() {
 		Transaction tr = db.createTransaction();
-//		return tr.get(new Tuple().add("/v/").add(this.id.toString()).pack()).get() != null;
+//		return tr.get(new Tuple().add("/v/").add(this.getId()).pack()).get() != null;
 		return tr.get(this.getId().toString().getBytes()).get() != null;
 	}
 	
