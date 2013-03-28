@@ -59,6 +59,9 @@ public class FoundationDBGraph implements Graph {
 		this.graphName = graphName;
 		this.fdb = FDB.selectAPIVersion(21);
 		this.db = fdb.open().get();
+        Transaction tr = db.createTransaction();
+        tr.clearRangeStartsWith(graphPrefix().pack());
+        tr.commit().get();
 	}
 	
 	public Features getFeatures() {
@@ -209,8 +212,6 @@ public class FoundationDBGraph implements Graph {
 
 	public void shutdown() {
 		Transaction tr = db.createTransaction();
-		byte[] zero = new byte[1];
-		zero[0] = 0;
 		tr.clearRangeStartsWith(graphPrefix().pack());
 		tr.commit().get();
 	}
