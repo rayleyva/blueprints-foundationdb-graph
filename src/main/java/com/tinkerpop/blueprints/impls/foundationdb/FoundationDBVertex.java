@@ -1,6 +1,6 @@
 package com.tinkerpop.blueprints.impls.foundationdb;
 
-import java.util.Set;
+import java.util.*;
 
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -28,13 +28,21 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	}
 
 	@Override
-	public Iterable<Edge> getEdges(Direction direction, String... arg1) {
-		// TODO Auto-generated method stub
-		return null;
+	public Iterable<Edge> getEdges(Direction direction, String... labels) {
+		if (direction.equals(Direction.IN)) return getDirectionEdges("in", labels);
+        else if (direction.equals(Direction.OUT)) return getDirectionEdges("out", labels);
+        else  {
+            ArrayList<Edge> inEdges = getDirectionEdges("in", labels);
+            ArrayList<Edge> outEdges = getDirectionEdges("out", labels);
+            TreeSet<Edge> edges = new TreeSet<Edge>();
+            edges.addAll(inEdges);
+            edges.addAll(outEdges);
+            return edges;
+        }
 	}
 
 	@Override
-	public Iterable<Vertex> getVertices(Direction arg0, String... arg1) {
+	public Iterable<Vertex> getVertices(Direction direction, String... labels) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -44,6 +52,33 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+    private ArrayList<Edge> getDirectionEdges(final String direction, final String... labels) {
+        ArrayList<Edge> edges = new ArrayList<Edge>();
+        Transaction tr = g.db.createTransaction();
+        byte[] edgeBytes = tr.get(g.graphPrefix().add(direction).add(this.getId()).pack()).get();
+        if (edgeBytes == null) return new ArrayList<Edge>();
+        else {
+            List<Object> edgeIds = Tuple.fromBytes(edgeBytes).getItems();
+            for (Object edgeID : edgeIds) {
+                FoundationDBEdge e = new FoundationDBEdge(g, new String((byte[]) edgeID));
+                if (labels.length == 0) {
+                    edges.add(e);
+                }
+                else if (labels.length == 1) {
+                    if (e.getLabel().equals(labels[0])) {
+                        edges.add(e);
+                    }
+                }
+                else {
+                    if (Arrays.asList(labels).contains(e.getLabel())) {
+                        edges.add(e);
+                    }
+                }
+            }
+        }
+        return edges;
+    }
 
 	
 	@Override
