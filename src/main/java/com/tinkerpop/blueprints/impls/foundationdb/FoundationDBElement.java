@@ -33,6 +33,8 @@ public class FoundationDBElement implements Element {
         else if (valueType.equals("integer")) return (T) new Integer((new Long(t.getLong(1))).intValue());
         else if (valueType.equals("long")) return (T) t.get(1);
         else if (valueType.equals("boolean")) return (T) getBool(t.getLong(1));
+        else if (valueType.equals("float")) return (T) new Float(Float.parseFloat(t.getString(1)));
+        else if (valueType.equals("double")) return (T) new Double(Double.parseDouble(t.getString(1)));
         else throw new IllegalStateException();
 	}
 
@@ -62,7 +64,7 @@ public class FoundationDBElement implements Element {
 
 	@Override
 	public void setProperty(String key, Object value) {
-        if (!(value instanceof String || value instanceof Integer || value instanceof Long || value instanceof Boolean)) throw new IllegalArgumentException();
+        if (!(value instanceof String || value instanceof Number || value instanceof Boolean)) throw new IllegalArgumentException();
         if (key.equals("") || key.toLowerCase().equals("id") || key.toLowerCase().equals("label") || key == null) throw new IllegalArgumentException();
         String valueType;
         if (value instanceof String) {
@@ -84,6 +86,20 @@ public class FoundationDBElement implements Element {
             Number rawValue = (Number) value;
             Transaction tr = g.db.createTransaction();
             tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), new Tuple().add(valueType).addObject(rawValue).pack());
+            tr.commit().get();
+        }
+        else if (value instanceof Double) {
+            valueType = "double";
+            String rawValue = value.toString();
+            Transaction tr = g.db.createTransaction();
+            tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), new Tuple().add(valueType).add(rawValue).pack());
+            tr.commit().get();
+        }
+        else if (value instanceof Float) {
+            valueType = "float";
+            String rawValue = value.toString();
+            Transaction tr = g.db.createTransaction();
+            tr.set(g.graphPrefix().add("p").add(this.getId()).add(key).pack(), new Tuple().add(valueType).add(rawValue).pack());
             tr.commit().get();
         }
         else if (value instanceof Boolean) {

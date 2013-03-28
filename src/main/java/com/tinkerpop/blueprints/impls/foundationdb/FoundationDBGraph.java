@@ -35,8 +35,8 @@ public class FoundationDBGraph implements Graph {
 
         FEATURES.supportsSerializableObjectProperty = false;
         FEATURES.supportsBooleanProperty = true;
-        FEATURES.supportsDoubleProperty = false;
-        FEATURES.supportsFloatProperty = false;
+        FEATURES.supportsDoubleProperty = true;
+        FEATURES.supportsFloatProperty = true;
         FEATURES.supportsIntegerProperty = true;
         FEATURES.supportsPrimitiveArrayProperty = false;
         FEATURES.supportsUniformListProperty = false;
