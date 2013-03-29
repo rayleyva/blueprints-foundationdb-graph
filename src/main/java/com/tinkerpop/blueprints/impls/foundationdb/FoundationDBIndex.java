@@ -1,5 +1,6 @@
 package com.tinkerpop.blueprints.impls.foundationdb;
 
+import com.foundationdb.KeyValue;
 import com.foundationdb.Transaction;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.*;
@@ -7,6 +8,7 @@ import sun.jvm.hotspot.debugger.win32.coff.DebugVC50TypeLeafIndices;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -39,15 +41,8 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
 
     public void put(String key, Object value, T element) {
         Transaction tr = g.db.createTransaction();
-        byte[] rawKey = getRawIndexKey(key, value);
-        byte[] existingValue = tr.get(rawKey).get();
-        if (existingValue == null) {
-            tr.set(rawKey, new Tuple().add(element.getId().toString()).pack());
-        }
-        else {
-            Tuple existingValues = Tuple.fromBytes(existingValue);
-            tr.set(rawKey, existingValues.add(element.getId().toString()).pack());
-        }
+        tr.set(getRawIndexKey(key, value).add(element.getId().toString()).pack(), "".getBytes());
+        tr.set(getRawReverseIndexKey(element, key, value), "".getBytes());
         tr.commit().get();
     }
 
@@ -55,11 +50,9 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
     public CloseableIterable<T> get(String key, Object value) {
         ArrayList<T> items = new ArrayList<T>();
         Transaction tr = g.db.createTransaction();
-        byte[] existingValues = tr.get(getRawIndexKey(key, value)).get();
-        if (existingValues == null) return new FoundationDBCloseableIterable<T>(items.iterator());
-        Tuple tuple = Tuple.fromBytes(existingValues);
-        for (Object o : tuple.getItems()) {
-            String name = (String) o;
+        List<KeyValue> existingValues = tr.getRangeStartsWith(getRawIndexKey(key, value).pack()).asList().get();
+        for (KeyValue kv : existingValues) {
+            String name = Tuple.fromBytes(kv.getKey()).getString(6);
             if (this.getIndexClass().equals(Vertex.class)) items.add((T) new FoundationDBVertex(g, name));
             else if (this.getIndexClass().equals(Edge.class)) items.add((T) new FoundationDBEdge(g, name));
         }
@@ -74,20 +67,28 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
 
     public long count(String key, Object value) {
         Transaction tr = g.db.createTransaction();
-        byte[] existingValue = tr.get(getRawIndexKey(key, value)).get();
-        if (existingValue == null) return 0;
-        Tuple tuple = Tuple.fromBytes(existingValue);
-        return tuple.size();
+        List<KeyValue> existingValues = tr.getRangeStartsWith(getRawIndexKey(key, value).pack()).asList().get();
+        return existingValues.size();
     }
 
 
     public void remove(String key, Object value, T element) {
         Transaction tr = g.db.createTransaction();
-        tr.clearRangeStartsWith(getRawIndexKey(key, value));
+        tr.clear(getRawIndexKey(key, value).add(element.getId().toString()).pack());
         tr.commit().get();
     }
 
-    private byte[] getRawIndexKey(String key, Object value) {
-        return g.graphPrefix().add("iv").add(this.getIndexName()).add(key).addObject(value).pack();
+    private Tuple getRawIndexKey(String key, Object value) {
+        return g.graphPrefix().add("iv").add(this.getIndexName()).add(key).addObject(value);
+    }
+
+    private byte[] getRawReverseIndexKey(T e, String key, Object value) {
+        return g.graphPrefix().add("ri").add(this.getElementString()).add(e.getId().toString()).add(this.getIndexName()).add(key).addObject(value).pack();
+    }
+
+    private String getElementString() {
+        if (this.getIndexClass().equals(Vertex.class)) return "v";
+        else if (this.getIndexClass().equals(Edge.class)) return "e";
+        else throw new IllegalStateException();
     }
 }
