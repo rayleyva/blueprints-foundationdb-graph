@@ -11,7 +11,7 @@ import com.foundationdb.FDB;
 import com.foundationdb.Transaction;
 import com.foundationdb.tuple.Tuple;
 
-public class FoundationDBGraph implements Graph {
+public class FoundationDBGraph implements Graph, IndexableGraph {
 	
 	public Database db;
 	private FDB fdb;
@@ -24,14 +24,14 @@ public class FoundationDBGraph implements Graph {
         FEATURES.isPersistent = true;
         FEATURES.supportsVertexIteration = true;
         FEATURES.supportsEdgeIteration = true;
-        FEATURES.supportsVertexIndex = false;
-        FEATURES.supportsEdgeIndex = false;
+        FEATURES.supportsVertexIndex = true;
+        FEATURES.supportsEdgeIndex = true;
         FEATURES.ignoresSuppliedIds = false;
         FEATURES.supportsEdgeRetrieval = true;
         FEATURES.supportsVertexProperties = true;
         FEATURES.supportsEdgeProperties = true;
         FEATURES.supportsTransactions = false;
-        FEATURES.supportsIndices = false;
+        FEATURES.supportsIndices = true;
 
         FEATURES.supportsSerializableObjectProperty = false;
         FEATURES.supportsBooleanProperty = true;
@@ -249,7 +249,45 @@ public class FoundationDBGraph implements Graph {
         tr.clearRangeStartsWith(graphPrefix().pack());
         tr.commit().get();
     }
-	
 
+    public <T extends Element> Index<T> createIndex(String name, Class<T> type, Parameter... args) {
+        if (this.hasIndex(name, type)) throw new IllegalStateException();
+        Transaction tr = db.createTransaction();
+        tr.set(graphPrefix().add("i").add(name).pack(), type.getSimpleName().getBytes());
+        tr.commit().get();
+        return new FoundationDBIndex<T>(name, type, this);
+    }
 
+    public <T extends Element> Index<T> getIndex(String name, Class<T> type) {
+        FoundationDBIndex<T> index = new FoundationDBIndex<T>(name, type, this);
+        if (this.hasIndex(name, type)) return index;
+        else return null;
+    }
+
+    public void dropIndex(String name) {
+        Transaction tr = db.createTransaction();
+        tr.clearRangeStartsWith(graphPrefix().add("i").add(name).pack());
+        tr.commit().get();
+    }
+
+    public Iterable<Index<? extends Element>> getIndices() {
+        List<Index<? extends Element>> indices = new ArrayList<Index<? extends Element>>();
+        Transaction tr = db.createTransaction();
+        List<KeyValue> kvs= tr.getRangeStartsWith(graphPrefix().add("i").pack()).asList().get();
+        for (KeyValue kv : kvs) {
+            if (new String(kv.getValue()).equals("Vertex")) {
+                indices.add(new FoundationDBIndex<Vertex>(Tuple.fromBytes(kv.getKey()).getString(3), Vertex.class, this));
+            }
+            else if (new String(kv.getValue()).equals("Edge")) {
+                indices.add(new FoundationDBIndex<Edge>(Tuple.fromBytes(kv.getKey()).getString(3), Edge.class, this));
+            }
+        }
+        return indices;
+    }
+
+    private <T extends Element> boolean hasIndex(String name, Class<T> type) {
+        Transaction tr = db.createTransaction();
+        byte[] bytes = tr.get(graphPrefix().add("i").add(name).pack()).get();
+        return (bytes != null && new String(bytes).equals(type.getSimpleName()));
+    }
 }

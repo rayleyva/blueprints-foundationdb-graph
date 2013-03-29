@@ -40,17 +40,17 @@ public class FoundationDBGraphTest extends GraphTest {
 //        printTestPerformance("KeyIndexableGraphTestSuite", this.stopWatch());
 //    }
 //
-//    public void testIndexableGraphTestSuite() throws Exception {
-//        this.stopWatch();
-//        doTestSuite(new IndexableGraphTestSuite(this));
-//        printTestPerformance("IndexableGraphTestSuite", this.stopWatch());
-//    }
-//
-//    public void testIndexTestSuite() throws Exception {
-//        this.stopWatch();
-//        doTestSuite(new IndexTestSuite(this));
-//        printTestPerformance("IndexTestSuite", this.stopWatch());
-//    }
+    public void testIndexableGraphTestSuite() throws Exception {
+        this.stopWatch();
+        doTestSuite(new IndexableGraphTestSuite(this));
+        printTestPerformance("IndexableGraphTestSuite", this.stopWatch());
+    }
+
+    public void testIndexTestSuite() throws Exception {
+        this.stopWatch();
+        doTestSuite(new IndexTestSuite(this));
+        printTestPerformance("IndexTestSuite", this.stopWatch());
+    }
 
     public void testGraphMLReaderTestSuite() throws Exception {
         this.stopWatch();

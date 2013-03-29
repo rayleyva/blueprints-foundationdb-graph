@@ -13,8 +13,14 @@ import java.util.Iterator;
  */
 public class FoundationDBCloseableIterable<T> implements CloseableIterable<T> {
 
+    private Iterator<T> myIterator;
+
+    public FoundationDBCloseableIterable(Iterator<T> iterator) {
+        this.myIterator = iterator;
+    }
+
     public Iterator<T> iterator() {
-        return null;
+        return myIterator;
     }
 
     public void close() {
