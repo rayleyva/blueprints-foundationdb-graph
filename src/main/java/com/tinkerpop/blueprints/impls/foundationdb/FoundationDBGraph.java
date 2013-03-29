@@ -21,7 +21,7 @@ public class FoundationDBGraph implements Graph {
 	static {
         FEATURES.supportsDuplicateEdges = true;
         FEATURES.supportsSelfLoops = true;
-        FEATURES.isPersistent = false;
+        FEATURES.isPersistent = true;
         FEATURES.supportsVertexIteration = true;
         FEATURES.supportsEdgeIteration = true;
         FEATURES.supportsVertexIndex = false;

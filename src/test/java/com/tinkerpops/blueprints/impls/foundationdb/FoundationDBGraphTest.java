@@ -73,8 +73,12 @@ public class FoundationDBGraphTest extends GraphTest {
     @Override
     public Graph generateGraph() {
         FoundationDBGraph g = new FoundationDBGraph("graphTest");
-        g.purge();
         return g;
+    }
+
+    public void purgeTest() {
+        FoundationDBGraph g = new FoundationDBGraph("graphTest");
+        g.purge();
     }
 
     public void doTestSuite(final TestSuite testSuite) throws Exception {
@@ -82,6 +86,7 @@ public class FoundationDBGraphTest extends GraphTest {
         if (doTest == null || doTest.equals("true")) {
             for (Method method : testSuite.getClass().getDeclaredMethods()) {
                 if (method.getName().startsWith("test")) {
+                    purgeTest();
                     System.out.println("Testing " + method.getName() + "...");
                     method.invoke(testSuite);
                 }
