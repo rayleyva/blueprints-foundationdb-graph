@@ -2,13 +2,11 @@ package com.tinkerpop.blueprints.impls.foundationdb;
 
 import java.util.*;
 
-import com.foundationdb.Database;
 import com.foundationdb.KeyValue;
 import com.foundationdb.Transaction;
 import com.foundationdb.tuple.Tuple;
-import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.foundationdb.util.FoundationDBGraphUtils;
 
 public abstract class FoundationDBElement implements Element {
 

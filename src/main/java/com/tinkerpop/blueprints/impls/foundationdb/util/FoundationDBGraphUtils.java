@@ -1,4 +1,4 @@
-package com.tinkerpop.blueprints.impls.foundationdb;
+package com.tinkerpop.blueprints.impls.foundationdb.util;
 
 public class FoundationDBGraphUtils {
 

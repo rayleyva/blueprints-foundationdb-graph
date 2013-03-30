@@ -4,6 +4,7 @@ import com.foundationdb.KeyValue;
 import com.foundationdb.Transaction;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.impls.foundationdb.util.FoundationDBGraphUtils;
 
 import java.util.ArrayList;
 import java.util.List;
