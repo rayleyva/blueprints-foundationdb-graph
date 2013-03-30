@@ -60,6 +60,9 @@ public abstract class FoundationDBElement implements Element {
         Transaction tr = g.db.createTransaction();
 		T value = this.getProperty(key);
         tr.clearRangeStartsWith(this.getRawKey(key));
+        if (g.hasKeyIndex(key, this.getAbstractClass())) {
+            tr.clear(g.graphPrefix().add("kid").add(this.elementType()).add(key).addObject(FoundationDBGraphUtils.getStoreableValue(value)).add(this.getId()).pack());
+        }
         tr.commit().get();
         return value;
 	}
@@ -69,55 +72,32 @@ public abstract class FoundationDBElement implements Element {
         if (!(value instanceof String || value instanceof Number || value instanceof Boolean)) throw new IllegalArgumentException();
         if (key.equals("") || key.toLowerCase().equals("id") || key.toLowerCase().equals("label") || key == null) throw new IllegalArgumentException();
         String valueType;
-        byte[] rawKey = getRawKey(key);
+        Transaction tr = g.db.createTransaction();
         if (value instanceof String) {
             valueType = "string";
-            String rawValue = (String) value;
-            Transaction tr = g.db.createTransaction();
-            tr.set(rawKey, new Tuple().add(valueType).add(rawValue).pack());
-            tr.commit().get();
         }
         else if (value instanceof Integer) {
             valueType = "integer";
-            Number rawValue = (Number) value;
-            Transaction tr = g.db.createTransaction();
-            tr.set(rawKey, new Tuple().add(valueType).addObject(rawValue).pack());
-            tr.commit().get();
         }
         else if (value instanceof Long) {
             valueType = "long";
-            Number rawValue = (Number) value;
-            Transaction tr = g.db.createTransaction();
-            tr.set(rawKey, new Tuple().add(valueType).addObject(rawValue).pack());
-            tr.commit().get();
         }
         else if (value instanceof Double) {
             valueType = "double";
-            String rawValue = value.toString();
-            Transaction tr = g.db.createTransaction();
-            tr.set(rawKey, new Tuple().add(valueType).add(rawValue).pack());
-            tr.commit().get();
         }
         else if (value instanceof Float) {
             valueType = "float";
-            String rawValue = value.toString();
-            Transaction tr = g.db.createTransaction();
-            tr.set(rawKey, new Tuple().add(valueType).add(rawValue).pack());
-            tr.commit().get();
         }
         else if (value instanceof Boolean) {
             valueType = "boolean";
-            int rawValue;
-            if (value == Boolean.TRUE) rawValue = 1;
-            else rawValue = 0;
-            Transaction tr = g.db.createTransaction();
-            tr.set(rawKey, new Tuple().add(valueType).add(rawValue).pack());
-            tr.commit().get();
         }
         else throw new IllegalArgumentException();
-
-		
-	}
+        tr.set(this.getRawKey(key), new Tuple().add(valueType).addObject(FoundationDBGraphUtils.getStoreableValue(value)).pack());
+        if (g.hasKeyIndex(key, this.getAbstractClass())) {
+            tr.set(g.graphPrefix().add("kid").add(this.elementType()).add(key).addObject(FoundationDBGraphUtils.getStoreableValue(value)).add(this.getId()).pack(), "".getBytes());
+        }
+        tr.commit().get();
+    }
 
 	@Override
 	public int hashCode() {
@@ -150,9 +130,9 @@ public abstract class FoundationDBElement implements Element {
         throw new IllegalArgumentException();
     }
 
-    public String elementType() {
-        throw new IllegalStateException();
-    }
+    public abstract String elementType();
+
+    public abstract Class <? extends Element> getAbstractClass();
 
     private byte[] getRawKey(String key) {
         return g.graphPrefix().add("p").add(this.elementType()).add(this.getId()).add(key).pack();

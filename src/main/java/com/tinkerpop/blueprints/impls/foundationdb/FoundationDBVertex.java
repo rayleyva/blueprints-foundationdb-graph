@@ -3,10 +3,7 @@ package com.tinkerpop.blueprints.impls.foundationdb;
 import java.util.*;
 
 import com.foundationdb.KeyValue;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.VertexQuery;
+import com.tinkerpop.blueprints.*;
 import com.foundationdb.tuple.Tuple;
 import com.foundationdb.Database;
 import com.foundationdb.Transaction;
@@ -16,6 +13,11 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
     @Override
     public String elementType() {
         return "v";
+    }
+
+    @Override
+    public Class <? extends Element> getAbstractClass() {
+        return Vertex.class;
     }
 
 	public FoundationDBVertex(FoundationDBGraph g, String vID) {

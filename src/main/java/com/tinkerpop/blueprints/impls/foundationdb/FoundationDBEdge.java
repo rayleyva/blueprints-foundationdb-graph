@@ -3,6 +3,7 @@ package com.tinkerpop.blueprints.impls.foundationdb;
 import com.foundationdb.Transaction;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
 
 public class FoundationDBEdge extends FoundationDBElement implements Edge {
@@ -10,6 +11,11 @@ public class FoundationDBEdge extends FoundationDBElement implements Edge {
     @Override
     public String elementType() {
         return "e";
+    }
+
+    @Override
+    public Class <? extends Element> getAbstractClass() {
+        return Edge.class;
     }
 
     public FoundationDBEdge(FoundationDBGraph g) {

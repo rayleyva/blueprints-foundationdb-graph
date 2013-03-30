@@ -29,11 +29,11 @@ public class FoundationDBGraphTest extends GraphTest {
         printTestPerformance("GraphTestSuite", this.stopWatch());
     }
 
-//    public void testKeyIndexableGraphTestSuite() throws Exception {
-//        this.stopWatch();
-//        doTestSuite(new KeyIndexableGraphTestSuite(this));
-//        printTestPerformance("KeyIndexableGraphTestSuite", this.stopWatch());
-//    }
+    public void testKeyIndexableGraphTestSuite() throws Exception {
+        this.stopWatch();
+        doTestSuite(new KeyIndexableGraphTestSuite(this));
+        printTestPerformance("KeyIndexableGraphTestSuite", this.stopWatch());
+    }
 
     public void testIndexableGraphTestSuite() throws Exception {
         this.stopWatch();
