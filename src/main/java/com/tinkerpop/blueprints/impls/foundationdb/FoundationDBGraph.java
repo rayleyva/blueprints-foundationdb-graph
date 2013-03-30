@@ -8,6 +8,7 @@ import com.foundationdb.Database;
 import com.foundationdb.FDB;
 import com.foundationdb.Transaction;
 import com.foundationdb.tuple.Tuple;
+import com.tinkerpop.blueprints.impls.foundationdb.util.FoundationDBGraphUtils;
 import com.tinkerpop.blueprints.util.PropertyFilteredIterable;
 
 public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
@@ -308,10 +309,36 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 
 
     public <T extends Element> void createKeyIndex(String key, Class<T> elementClass, final Parameter... indexParameters) {
+        if (this.hasKeyIndex(key, elementClass)) throw new IllegalArgumentException();
         Transaction tr = db.createTransaction();
         tr.set(graphPrefix().add("ki").add(getElementString(elementClass)).add(key).pack(), "".getBytes());
         tr.commit().get();
+        reindexElements(key, elementClass);
         addIndexToCache(key, elementClass);
+    }
+
+    private void reindexElements(String key, Class<? extends Element> elementClass) {
+        if (elementClass.equals(Vertex.class)) {
+            Transaction tr = db.createTransaction();
+            Iterable<Vertex> vertices = this.getVertices();
+            for (Vertex v : vertices) {
+                if (v.getPropertyKeys().contains(key)) {
+                    tr.set(graphPrefix().add("kid").add(getElementString(elementClass)).add(key).addObject(FoundationDBGraphUtils.getStoreableValue(v.getProperty(key))).add(v.getId().toString()).pack(), "".getBytes());
+                }
+            }
+            tr.commit().get();
+        }
+        else if (elementClass.equals(Edge.class)) {
+            Transaction tr = db.createTransaction();
+            Iterable<Edge> edges = this.getEdges();
+            for (Edge e : edges) {
+                if (e.getPropertyKeys().contains(key)) {
+                    tr.set(graphPrefix().add("kid").add(getElementString(elementClass)).add(key).addObject(FoundationDBGraphUtils.getStoreableValue(e.getProperty(key))).add(e.getId().toString()).pack(), "".getBytes());
+                }
+            }
+            tr.commit().get();
+        }
+        else throw new IllegalArgumentException();
     }
 
 
