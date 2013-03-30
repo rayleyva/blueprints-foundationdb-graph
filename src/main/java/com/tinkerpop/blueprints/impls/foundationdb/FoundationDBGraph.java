@@ -76,16 +76,8 @@ public class FoundationDBGraph implements Graph, IndexableGraph {
         tr.set(graphPrefix().add("e").add(e.getId()).pack(), label.getBytes());
         tr.set(graphPrefix().add("in").add("e").add(e.getId()).pack(), inVertex.getId().toString().getBytes());
         tr.set(graphPrefix().add("out").add("e").add(e.getId()).pack(), outVertex.getId().toString().getBytes());
-        byte[] existingInEdgesByte = tr.get(graphPrefix().add("in").add("v").add(inVertex.getId().toString()).pack()).get();
-        byte[] existingOutEdgesByte = tr.get(graphPrefix().add("out").add("v").add(outVertex.getId().toString()).pack()).get();
-        Tuple existingInEdges;
-        Tuple existingOutEdges;
-        if (existingInEdgesByte != null) existingInEdges = Tuple.fromBytes(existingInEdgesByte);
-        else existingInEdges = new Tuple();
-        if (existingOutEdgesByte != null) existingOutEdges = Tuple.fromBytes(existingOutEdgesByte);
-        else existingOutEdges = new Tuple();
-        tr.set(graphPrefix().add("in").add("v").add(inVertex.getId().toString()).pack(), existingInEdges.add(e.getId().getBytes()).pack());
-        tr.set(graphPrefix().add("out").add("v").add(outVertex.getId().toString()).pack(), existingOutEdges.add(e.getId().getBytes()).pack());
+        tr.set(graphPrefix().add("in").add("v").add(inVertex.getId().toString()).add(e.getId()).pack(), "".getBytes());
+        tr.set(graphPrefix().add("out").add("v").add(outVertex.getId().toString()).add(e.getId()).pack(), "".getBytes());
         tr.commit().get();
         return e;
 	}
@@ -184,32 +176,8 @@ public class FoundationDBGraph implements Graph, IndexableGraph {
         Transaction tr = db.createTransaction();
         Vertex inVertex = e.getVertex(Direction.IN);
         Vertex outVertex = e.getVertex(Direction.OUT);
-        Tuple inVertexEdges = Tuple.fromBytes(tr.get(graphPrefix().add("in").add("v").add(inVertex.getId().toString()).pack()).get());
-        Tuple outVertexEdges = Tuple.fromBytes(tr.get(graphPrefix().add("out").add("v").add(outVertex.getId().toString()).pack()).get());
-        List<Object> inVertexEdgeList = inVertexEdges.getItems();
-        List<Object> outVertexEdgeList = outVertexEdges.getItems();
-        Tuple newInTuple = new Tuple();
-        Tuple newOutTuple = new Tuple();
-        for (Object id : inVertexEdgeList) {
-            String byteString = new String((byte[]) id);
-            if (byteString.equals(e.getId().toString())) {
-
-            }
-            else {
-                newInTuple = newInTuple.add((byte[])id);
-            }
-        }
-        for (Object id : outVertexEdgeList) {
-            String byteString = new String((byte[]) id);
-            if (byteString.equals(e.getId().toString())) {
-
-            }
-            else {
-                newOutTuple = newOutTuple.add((byte[])id);
-            }
-        }
-        tr.set(graphPrefix().add("in").add("v").add(inVertex.getId().toString()).pack(), newInTuple.pack());
-        tr.set(graphPrefix().add("out").add("v").add(outVertex.getId().toString()).pack(), newOutTuple.pack());
+        tr.clear(graphPrefix().add("in").add("v").add(inVertex.getId().toString()).add(e.getId().toString()).pack());
+        tr.clear(graphPrefix().add("out").add("v").add(outVertex.getId().toString()).add(e.getId().toString()).pack());
         tr.clearRangeStartsWith(graphPrefix().add("e").add(e.getId().toString()).pack());
         tr.clearRangeStartsWith(graphPrefix().add("in").add("e").add(e.getId().toString()).pack());
         tr.clearRangeStartsWith(graphPrefix().add("out").add("e").add(e.getId().toString()).pack());

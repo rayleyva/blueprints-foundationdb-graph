@@ -2,6 +2,7 @@ package com.tinkerpop.blueprints.impls.foundationdb;
 
 import java.util.*;
 
+import com.foundationdb.KeyValue;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
@@ -83,24 +84,20 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
     private ArrayList<Edge> getDirectionEdges(final String direction, final String... labels) {
         ArrayList<Edge> edges = new ArrayList<Edge>();
         Transaction tr = g.db.createTransaction();
-        byte[] edgeBytes = tr.get(g.graphPrefix().add(direction).add("v").add(this.getId()).pack()).get();
-        if (edgeBytes == null) return new ArrayList<Edge>();
-        else {
-            List<Object> edgeIds = Tuple.fromBytes(edgeBytes).getItems();
-            for (Object edgeID : edgeIds) {
-                FoundationDBEdge e = new FoundationDBEdge(g, new String((byte[]) edgeID));
-                if (labels.length == 0) {
+        List<KeyValue> edgeKeys = tr.getRangeStartsWith(g.graphPrefix().add(direction).add("v").add(this.getId()).pack()).asList().get();
+        for (KeyValue kv : edgeKeys) {
+            FoundationDBEdge e = new FoundationDBEdge(g, Tuple.fromBytes(kv.getKey()).getString(5));
+            if (labels.length == 0) {
+                edges.add(e);
+            }
+            else if (labels.length == 1) {
+                if (e.getLabel().equals(labels[0])) {
                     edges.add(e);
                 }
-                else if (labels.length == 1) {
-                    if (e.getLabel().equals(labels[0])) {
-                        edges.add(e);
-                    }
-                }
-                else {
-                    if (Arrays.asList(labels).contains(e.getLabel())) {
-                        edges.add(e);
-                    }
+            }
+            else {
+                if (Arrays.asList(labels).contains(e.getLabel())) {
+                    edges.add(e);
                 }
             }
         }
