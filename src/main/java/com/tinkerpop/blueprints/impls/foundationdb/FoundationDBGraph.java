@@ -208,6 +208,11 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
         tr.clearRangeStartsWith(graphPrefix().add("in").add("e").add(e.getId().toString()).pack());
         tr.clearRangeStartsWith(graphPrefix().add("out").add("e").add(e.getId().toString()).pack());
         tr.clearRangeStartsWith(graphPrefix().add("p").add("e").add(e.getId().toString()).pack());
+        for (String key : e.getPropertyKeys()) {
+            if (hasKeyIndex(key, Edge.class)) {
+                tr.clear(graphPrefix().add("kid").add("e").add(key).addObject(FoundationDBGraphUtils.getStoreableValue(e.getProperty(key))).add(e.getId().toString()).pack());
+            }
+        }
         byte[] reverseIndexKey = graphPrefix().add("ri").add("e").add(e.getId().toString()).pack();
         List<KeyValue> reverseIndexValues = tr.getRangeStartsWith(reverseIndexKey).asList().get();
         for (KeyValue kv : reverseIndexValues) {
@@ -229,6 +234,11 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
         tr.clearRangeStartsWith(graphPrefix().add("in").add("v").add(v.getId().toString()).pack());
         tr.clearRangeStartsWith(graphPrefix().add("out").add("v").add(v.getId().toString()).pack());
         tr.clearRangeStartsWith(graphPrefix().add("p").add("v").add(v.getId().toString()).pack());
+        for (String key : v.getPropertyKeys()) {
+            if (hasKeyIndex(key, Vertex.class)) {
+                tr.clear(graphPrefix().add("kid").add("v").add(key).addObject(FoundationDBGraphUtils.getStoreableValue(v.getProperty(key))).add(v.getId().toString()).pack());
+            }
+        }
         byte[] reverseIndexKey = graphPrefix().add("ri").add("v").add(v.getId().toString()).pack();
         List<KeyValue> reverseIndexValues = tr.getRangeStartsWith(reverseIndexKey).asList().get();
         for (KeyValue kv : reverseIndexValues) {
