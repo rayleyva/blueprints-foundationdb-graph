@@ -1,7 +1,5 @@
 package com.tinkerpops.blueprints.impls.foundationdb;
 
-import static org.junit.Assert.*;
-
 import java.lang.reflect.Method;
 
 import com.tinkerpop.blueprints.*;
@@ -10,9 +8,6 @@ import com.tinkerpop.blueprints.impls.foundationdb.FoundationDBGraph;
 import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONReaderTestSuite;
-
-import org.junit.Test;
-
 
 public class FoundationDBGraphTest extends GraphTest {
 
@@ -39,7 +34,7 @@ public class FoundationDBGraphTest extends GraphTest {
 //        doTestSuite(new KeyIndexableGraphTestSuite(this));
 //        printTestPerformance("KeyIndexableGraphTestSuite", this.stopWatch());
 //    }
-//
+
     public void testIndexableGraphTestSuite() throws Exception {
         this.stopWatch();
         doTestSuite(new IndexableGraphTestSuite(this));
