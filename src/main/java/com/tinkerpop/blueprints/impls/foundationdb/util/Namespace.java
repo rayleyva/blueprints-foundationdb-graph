@@ -8,7 +8,16 @@ package com.tinkerpop.blueprints.impls.foundationdb.util;
  * To change this template use File | Settings | File Templates.
  */
 public enum Namespace {
-    VERTEX(1), EDGE(2), IN(3), OUT(4), BOTH(5);
+    VERTEX(1),
+    EDGE(2),
+
+    IN(3),
+    OUT(4),
+    BOTH(5),
+
+    INDICES(6),
+    INDEX_DATA(7),
+    REVERSE_INDEX(8);
 
     private Namespace(int value) {
         this.value = value;

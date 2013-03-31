@@ -2,6 +2,7 @@ package com.tinkerpop.blueprints.impls.foundationdb.util;
 
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
 
 public class FoundationDBGraphUtils {
@@ -32,6 +33,12 @@ public class FoundationDBGraphUtils {
     public static int getElementTypeCode(Class elementClass) {
         if (elementClass.equals(Vertex.class)) return Namespace.VERTEX.value;
         else if (elementClass.equals(Edge.class)) return Namespace.EDGE.value;
+        else throw new IllegalStateException();
+    }
+
+    public static int getElementTypeCode(Element e) {
+        if (e instanceof Vertex) return Namespace.VERTEX.value;
+        else if (e instanceof Edge) return Namespace.EDGE.value;
         else throw new IllegalStateException();
     }
 

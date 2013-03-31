@@ -33,7 +33,7 @@ public class FoundationDBEdge extends FoundationDBElement implements Edge {
 	public Vertex getVertex(Direction direction) throws IllegalArgumentException {
 		if (direction.equals(Direction.IN) || direction.equals((Direction.OUT))) {
             Transaction tr = g.db.createTransaction();
-            String vertexID = new String(tr.get(new KeyBuilder(g).add(direction).add(Namespace.EDGE).add(this).build()).get());
+            String vertexID = new String(tr.get(KeyBuilder.directionKeyPrefix(g, direction, this).build()).get());
             return new FoundationDBVertex(g, vertexID);
         }
         else throw new IllegalArgumentException();

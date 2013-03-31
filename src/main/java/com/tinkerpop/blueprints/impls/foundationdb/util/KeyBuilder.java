@@ -4,6 +4,7 @@ import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.impls.foundationdb.FoundationDBElement;
 import com.tinkerpop.blueprints.impls.foundationdb.FoundationDBGraph;
 
 /**
@@ -58,6 +59,10 @@ public class KeyBuilder {
 
     public byte[] build() {
         return tuple.pack();
+    }
+
+    public static KeyBuilder directionKeyPrefix(FoundationDBGraph g, Direction d, Element e) {
+        return new KeyBuilder(g).add(d).add(FoundationDBGraphUtils.getElementTypeCode(e)).add(e);
     }
 
 }

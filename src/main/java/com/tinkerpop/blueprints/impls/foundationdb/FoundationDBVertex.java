@@ -81,7 +81,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
     private ArrayList<Edge> getDirectionEdges(final Direction d, final String... labels) {
         ArrayList<Edge> edges = new ArrayList<Edge>();
         Transaction tr = g.db.createTransaction();
-        List<KeyValue> edgeKeys = tr.getRangeStartsWith(new KeyBuilder(g).add(d).add(Namespace.VERTEX).add(this).build()).asList().get();
+        List<KeyValue> edgeKeys = tr.getRangeStartsWith(KeyBuilder.directionKeyPrefix(g, d, this).build()).asList().get();
         for (KeyValue kv : edgeKeys) {
             FoundationDBEdge e = new FoundationDBEdge(g, Tuple.fromBytes(kv.getKey()).getString(5));
             if (labels.length == 0) {

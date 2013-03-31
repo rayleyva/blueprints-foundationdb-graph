@@ -5,6 +5,7 @@ import com.foundationdb.Transaction;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
+import com.tinkerpop.blueprints.impls.foundationdb.util.Namespace;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,10 +79,10 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
     }
 
     private KeyBuilder getRawIndexKey(String key, Object value) {          // todo separate keyspaces!
-        return new KeyBuilder(g).add("iv").add(getIndexName()).add(key).addObject(value);
+        return new KeyBuilder(g).add(Namespace.INDEX_DATA).add(getIndexName()).add(key).addObject(value);
     }
 
     private byte[] getRawReverseIndexKey(T e, String key, Object value) {
-        return new KeyBuilder(g).add("ri").add(indexClass).add(e).add(getIndexName()).add(key).addObject(value).build();
+        return new KeyBuilder(g).add(Namespace.REVERSE_INDEX).add(indexClass).add(e).add(getIndexName()).add(key).addObject(value).build();
     }
 }
