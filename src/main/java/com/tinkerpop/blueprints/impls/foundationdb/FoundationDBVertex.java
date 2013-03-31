@@ -44,18 +44,11 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	@Override
 	public Iterable<Vertex> getVertices(Direction d, String... labels) {
 		Collection<Vertex> vertices;
-        if (d.equals(Direction.IN)) {
+        if (d.equals(Direction.IN) || d.equals(Direction.OUT)) {
             ArrayList<Edge> edges = getDirectionEdges(d, labels);
             vertices = new ArrayList<Vertex>();
             for (Edge e : edges) {
-                vertices.add(e.getVertex(Direction.OUT));
-            }
-        }
-        else if (d.equals(Direction.OUT)) {
-            ArrayList<Edge> edges = getDirectionEdges(d, labels);
-            vertices = new ArrayList<Vertex>();
-            for (Edge e : edges) {
-                vertices.add(e.getVertex(Direction.IN));
+                vertices.add(e.getVertex(d.opposite()));
             }
         }
         else {
@@ -130,5 +123,4 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 			return false;
 		return true;
 	}
-
 }
