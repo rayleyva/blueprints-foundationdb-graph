@@ -50,6 +50,11 @@ public class KeyBuilder {
         return this.add(FoundationDBGraphUtils.getElementType(elementClass));
     }
 
+    public <T extends Element> KeyBuilder add(T element) {
+        tuple = tuple.add(element.getId().toString());
+        return this;
+    }
+
     public byte[] build() {
         return tuple.pack();
     }

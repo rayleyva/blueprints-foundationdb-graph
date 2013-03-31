@@ -40,7 +40,7 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
 
     public void put(String key, Object value, T element) {
         Transaction tr = g.db.createTransaction();
-        tr.set(getRawIndexKey(key, value).add(element.getId().toString()).build(), "".getBytes());
+        tr.set(getRawIndexKey(key, value).add(element).build(), "".getBytes());
         tr.set(getRawReverseIndexKey(element, key, value), "".getBytes());
         tr.commit().get();
     }
@@ -73,7 +73,7 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
 
     public void remove(String key, Object value, T element) {
         Transaction tr = g.db.createTransaction();
-        tr.clear(getRawIndexKey(key, value).add(element.getId().toString()).build());
+        tr.clear(getRawIndexKey(key, value).add(element).build());
         tr.commit().get();
     }
 
@@ -82,6 +82,6 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
     }
 
     private byte[] getRawReverseIndexKey(T e, String key, Object value) {
-        return new KeyBuilder(g).add("ri").add(indexClass).add(e.getId().toString()).add(getIndexName()).add(key).addObject(value).build();
+        return new KeyBuilder(g).add("ri").add(indexClass).add(e).add(getIndexName()).add(key).addObject(value).build();
     }
 }

@@ -31,14 +31,14 @@ public class FoundationDBEdge extends FoundationDBElement implements Edge {
 	@Override
 	public String getLabel() {
         Transaction tr = g.db.createTransaction();
-        return new String(tr.get(new KeyBuilder(g).add(ElementType.EDGE).add(getId()).build()).get());
+        return new String(tr.get(new KeyBuilder(g).add(ElementType.EDGE).add(this).build()).get());
 	}
 
 	@Override
 	public Vertex getVertex(Direction direction) throws IllegalArgumentException {
 		if (direction.equals(Direction.IN) || direction.equals((Direction.OUT))) {
             Transaction tr = g.db.createTransaction();
-            String vertexID = new String(tr.get(new KeyBuilder(g).add(direction).add(ElementType.EDGE).add(getId()).build()).get());
+            String vertexID = new String(tr.get(new KeyBuilder(g).add(direction).add(ElementType.EDGE).add(this).build()).get());
             return new FoundationDBVertex(g, vertexID);
         }
         else throw new IllegalArgumentException();
