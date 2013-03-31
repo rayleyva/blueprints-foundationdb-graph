@@ -193,7 +193,6 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 
 	@Override
 	public GraphQuery query() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

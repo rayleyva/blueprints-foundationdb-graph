@@ -74,7 +74,6 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 
 	@Override
 	public VertexQuery query() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
