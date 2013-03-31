@@ -188,8 +188,8 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         tr.clearRangeStartsWith(new KeyBuilder(this).add(Namespace.EDGE).add(e).build());
         tr.clearRangeStartsWith(KeyBuilder.directionKeyPrefix(this, Direction.IN, e).build());
         tr.clearRangeStartsWith(KeyBuilder.directionKeyPrefix(this, Direction.OUT, e).build());
-        tr.clearRangeStartsWith(KeyBuilder.propertyKeyPrefix(this, e).build());
         autoIndexer.autoRemove(e, tr);
+        tr.clearRangeStartsWith(KeyBuilder.propertyKeyPrefix(this, e).build());
         byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.EDGE).add(e).build();
         List<KeyValue> reverseIndexValues = tr.getRangeStartsWith(reverseIndexKey).asList().get();
         for (KeyValue kv : reverseIndexValues) {
@@ -209,8 +209,8 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         tr.clearRangeStartsWith(new KeyBuilder(this).add(Namespace.VERTEX).add(v).build());
         tr.clearRangeStartsWith(KeyBuilder.directionKeyPrefix(this, Direction.IN, v).build());
         tr.clearRangeStartsWith(KeyBuilder.directionKeyPrefix(this, Direction.OUT, v).build());
-        tr.clearRangeStartsWith(KeyBuilder.propertyKeyPrefix(this, v).build());
         autoIndexer.autoRemove(v, tr);
+        tr.clearRangeStartsWith(KeyBuilder.propertyKeyPrefix(this, v).build());
         byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.VERTEX).add(v).build();
         List<KeyValue> reverseIndexValues = tr.getRangeStartsWith(reverseIndexKey).asList().get();
         for (KeyValue kv : reverseIndexValues) {
