@@ -19,7 +19,10 @@ public enum Namespace {
     INDEX_DATA(7),
     REVERSE_INDEX(8),
 
-    PROPERTIES(9);
+    PROPERTIES(9),
+
+    KEY_INDEX(10),
+    KEY_INDEX_DATA(11);
 
     private Namespace(int value) {
         this.value = value;
