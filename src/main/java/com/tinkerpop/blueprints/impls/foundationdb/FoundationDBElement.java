@@ -6,6 +6,7 @@ import com.foundationdb.KeyValue;
 import com.foundationdb.Transaction;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.impls.foundationdb.util.ElementType;
 import com.tinkerpop.blueprints.impls.foundationdb.util.FoundationDBGraphUtils;
 
 public abstract class FoundationDBElement implements Element {
@@ -41,7 +42,7 @@ public abstract class FoundationDBElement implements Element {
 	@Override
 	public Set<String> getPropertyKeys() {
         Transaction tr = g.db.createTransaction();
-        List<KeyValue> l = tr.getRangeStartsWith(g.graphPrefix().add("p").add(this.elementType()).add(this.getId()).pack()).asList().get();
+        List<KeyValue> l = tr.getRangeStartsWith(g.graphPrefix().add("p").add(this.getElementType().value).add(this.getId()).pack()).asList().get();
         Set<String> keySet = new TreeSet<String>();
         for (KeyValue kv : l) {
             keySet.add(Tuple.fromBytes(kv.getKey()).getString(5));
@@ -59,7 +60,7 @@ public abstract class FoundationDBElement implements Element {
 		T value = this.getProperty(key);
         tr.clearRangeStartsWith(this.getRawKey(key));
         if (g.hasKeyIndex(key, this.getAbstractClass())) {
-            tr.clear(g.graphPrefix().add("kid").add(this.elementType()).add(key).addObject(FoundationDBGraphUtils.getStoreableValue(value)).add(this.getId()).pack());
+            tr.clear(g.graphPrefix().add("kid").add(this.getElementType().value).add(key).addObject(FoundationDBGraphUtils.getStoreableValue(value)).add(this.getId()).pack());
         }
         tr.commit().get();
         return value;
@@ -92,7 +93,7 @@ public abstract class FoundationDBElement implements Element {
         else throw new IllegalArgumentException();
         tr.set(this.getRawKey(key), new Tuple().add(valueType).addObject(FoundationDBGraphUtils.getStoreableValue(value)).pack());
         if (g.hasKeyIndex(key, this.getAbstractClass())) {
-            tr.set(g.graphPrefix().add("kid").add(this.elementType()).add(key).addObject(FoundationDBGraphUtils.getStoreableValue(value)).add(this.getId()).pack(), "".getBytes());
+            tr.set(g.graphPrefix().add("kid").add(this.getElementType().value).add(key).addObject(FoundationDBGraphUtils.getStoreableValue(value)).add(this.getId()).pack(), "".getBytes());
         }
         tr.commit().get();
     }
@@ -128,12 +129,12 @@ public abstract class FoundationDBElement implements Element {
         throw new IllegalArgumentException();
     }
 
-    public abstract String elementType();
-
     public abstract Class <? extends Element> getAbstractClass();
 
+    public abstract ElementType getElementType();
+
     private byte[] getRawKey(String key) {
-        return g.graphPrefix().add("p").add(this.elementType()).add(this.getId()).add(key).pack();
+        return g.graphPrefix().add("p").add(this.getElementType().value).add(this.getId()).add(key).pack();
     }
 
 }

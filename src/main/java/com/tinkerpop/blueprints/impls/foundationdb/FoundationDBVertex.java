@@ -7,17 +7,17 @@ import com.tinkerpop.blueprints.*;
 import com.foundationdb.tuple.Tuple;
 import com.foundationdb.Database;
 import com.foundationdb.Transaction;
+import com.tinkerpop.blueprints.impls.foundationdb.util.ElementType;
 
 public class FoundationDBVertex extends FoundationDBElement implements Vertex {
-
-    @Override
-    public String elementType() {
-        return "v";
-    }
-
     @Override
     public Class <? extends Element> getAbstractClass() {
         return Vertex.class;
+    }
+
+    @Override
+    public ElementType getElementType() {
+        return ElementType.VERTEX;
     }
 
 	public FoundationDBVertex(FoundationDBGraph g, String vID) {
@@ -86,7 +86,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
     private ArrayList<Edge> getDirectionEdges(final String direction, final String... labels) {
         ArrayList<Edge> edges = new ArrayList<Edge>();
         Transaction tr = g.db.createTransaction();
-        List<KeyValue> edgeKeys = tr.getRangeStartsWith(g.graphPrefix().add(direction).add("v").add(this.getId()).pack()).asList().get();
+        List<KeyValue> edgeKeys = tr.getRangeStartsWith(g.graphPrefix().add(direction).add(ElementType.VERTEX.value).add(this.getId()).pack()).asList().get();
         for (KeyValue kv : edgeKeys) {
             FoundationDBEdge e = new FoundationDBEdge(g, Tuple.fromBytes(kv.getKey()).getString(5));
             if (labels.length == 0) {

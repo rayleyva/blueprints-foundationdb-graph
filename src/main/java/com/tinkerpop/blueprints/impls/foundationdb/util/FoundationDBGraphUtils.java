@@ -1,5 +1,8 @@
 package com.tinkerpop.blueprints.impls.foundationdb.util;
 
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
+
 public class FoundationDBGraphUtils {
 
     public static Object getStoreableValue(Object value) {
@@ -23,6 +26,12 @@ public class FoundationDBGraphUtils {
             else return 0;
         }
         else throw new IllegalArgumentException();
+    }
+
+    public static ElementType getElementType(Class elementClass) {     //todo
+        if (elementClass.equals(Vertex.class)) return ElementType.VERTEX;
+        else if (elementClass.equals(Edge.class)) return ElementType.EDGE;
+        else throw new IllegalStateException();
     }
 
 }

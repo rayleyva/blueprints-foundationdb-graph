@@ -4,6 +4,7 @@ import com.foundationdb.KeyValue;
 import com.foundationdb.Transaction;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.impls.foundationdb.util.ElementType;
 import com.tinkerpop.blueprints.impls.foundationdb.util.FoundationDBGraphUtils;
 
 import java.util.ArrayList;
@@ -77,17 +78,11 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
         tr.commit().get();
     }
 
-    private Tuple getRawIndexKey(String key, Object value) {
+    private Tuple getRawIndexKey(String key, Object value) {          // todo separate keyspaces!
         return g.graphPrefix().add("iv").add(this.getIndexName()).add(key).addObject(FoundationDBGraphUtils.getStoreableValue(value));
     }
 
     private byte[] getRawReverseIndexKey(T e, String key, Object value) {
-        return g.graphPrefix().add("ri").add(this.getElementString()).add(e.getId().toString()).add(this.getIndexName()).add(key).addObject(FoundationDBGraphUtils.getStoreableValue(value)).pack();
-    }
-
-    private String getElementString() {                                 //todo
-        if (this.getIndexClass().equals(Vertex.class)) return "v";
-        else if (this.getIndexClass().equals(Edge.class)) return "e";
-        else throw new IllegalStateException();
+        return g.graphPrefix().add("ri").add(FoundationDBGraphUtils.getElementType(indexClass).value).add(e.getId().toString()).add(this.getIndexName()).add(key).addObject(FoundationDBGraphUtils.getStoreableValue(value)).pack();
     }
 }
