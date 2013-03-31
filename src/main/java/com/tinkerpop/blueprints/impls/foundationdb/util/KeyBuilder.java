@@ -43,6 +43,11 @@ public class KeyBuilder {
         return this;
     }
 
+    public KeyBuilder add(ElementType type) {
+        tuple = tuple.add(FoundationDBGraphUtils.getElementTypeCode(type));
+        return this;
+    }
+
     public <T extends Element> KeyBuilder add(T element) {
         tuple = tuple.add(element.getId().toString());
         return this;
@@ -58,6 +63,10 @@ public class KeyBuilder {
 
     public static KeyBuilder propertyKeyPrefix(FoundationDBGraph g, Element e) {
         return new KeyBuilder(g).add(Namespace.PROPERTIES).add(FoundationDBGraphUtils.getElementTypeCode(e)).add(e);
+    }
+
+    public static KeyBuilder keyIndexKeyDataPrefix(FoundationDBGraph g, ElementType type, String key) {
+        return new KeyBuilder(g).add(Namespace.KEY_INDEX_DATA).add(type).add(key);
     }
 
 }

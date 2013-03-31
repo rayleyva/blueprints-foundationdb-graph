@@ -119,7 +119,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 	public Iterable<Edge> getEdges(String key, Object value) {
         if (this.hasKeyIndex(key, ElementType.EDGE)) {
             Transaction tr = db.createTransaction();
-            List<KeyValue> kvs = tr.getRangeStartsWith(new KeyBuilder(this).add("kid").add(Namespace.EDGE).add(key).addObject(value).build()).asList().get();
+            List<KeyValue> kvs = tr.getRangeStartsWith(KeyBuilder.keyIndexKeyDataPrefix(this, ElementType.EDGE, key).addObject(value).build()).asList().get();
             ArrayList<Edge> edges = new ArrayList<Edge>();
             for (KeyValue kv : kvs) {
                 edges.add(new FoundationDBEdge(this, Tuple.fromBytes(kv.getKey()).getString(6)));
@@ -164,7 +164,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 	public Iterable<Vertex> getVertices(String key, Object value) {
         if (this.hasKeyIndex(key, ElementType.VERTEX)) {
             Transaction tr = db.createTransaction();
-            List<KeyValue> kvs = tr.getRangeStartsWith(new KeyBuilder(this).add("kid").add(Namespace.VERTEX).add(key).addObject(value).build()).asList().get();
+            List<KeyValue> kvs = tr.getRangeStartsWith(KeyBuilder.keyIndexKeyDataPrefix(this, ElementType.VERTEX, key).addObject(value).build()).asList().get();
             ArrayList<Vertex> vertices = new ArrayList<Vertex>();
             for (KeyValue kv : kvs) {
                 vertices.add(new FoundationDBVertex(this, Tuple.fromBytes(kv.getKey()).getString(6)));
@@ -283,8 +283,8 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 
     public <T extends Element> void dropKeyIndex(String key, Class<T> elementClass) {
         Transaction tr = db.createTransaction();
-        tr.clear(new KeyBuilder(this).add("ki").add(elementClass).add(key).build());
-        tr.clearRangeStartsWith(new KeyBuilder(this).add("kid").add(elementClass).add(key).build());
+        tr.clear(new KeyBuilder(this).add(Namespace.KEY_INDEX).add(elementClass).add(key).build());
+        tr.clearRangeStartsWith(KeyBuilder.keyIndexKeyDataPrefix(this, FoundationDBGraphUtils.getElementType(elementClass), key).build());
         tr.commit().get();
         keyIndexCache.removeIndexFromCache(key, elementClass);
     }
@@ -293,7 +293,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
     public <T extends Element> void createKeyIndex(String key, Class<T> elementClass, final Parameter... indexParameters) {
         if (this.hasKeyIndex(key, FoundationDBGraphUtils.getElementType(elementClass))) throw new IllegalArgumentException();
         Transaction tr = db.createTransaction();
-        tr.set(new KeyBuilder(this).add("ki").add(elementClass).add(key).build(), "".getBytes());
+        tr.set(new KeyBuilder(this).add(Namespace.KEY_INDEX).add(elementClass).add(key).build(), "".getBytes());
         autoIndexer.reindexElements(key, elementClass, tr);
         keyIndexCache.addIndexToCache(key, elementClass);
         tr.commit().get();

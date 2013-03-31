@@ -21,12 +21,12 @@ public class KeyIndexCache {
         this.graph = graph;
         this.vertexKeyIndices = new TreeSet<String>();
         Transaction tr = graph.db.createTransaction();
-        List<KeyValue> kvs = tr.getRangeStartsWith(new KeyBuilder(graph).add("ki").add(Namespace.VERTEX).build()).asList().get();
+        List<KeyValue> kvs = tr.getRangeStartsWith(new KeyBuilder(graph).add(Namespace.KEY_INDEX).add(Namespace.VERTEX).build()).asList().get();
         for (KeyValue kv : kvs) {
             this.vertexKeyIndices.add(Tuple.fromBytes(kv.getKey()).getString(4));
         }
         this.edgeKeyIndices = new TreeSet<String>();
-        kvs = tr.getRangeStartsWith(new KeyBuilder(graph).add("ki").add(Namespace.EDGE).build()).asList().get();
+        kvs = tr.getRangeStartsWith(new KeyBuilder(graph).add(Namespace.KEY_INDEX).add(Namespace.EDGE).build()).asList().get();
         for (KeyValue kv : kvs) {
             this.edgeKeyIndices.add(Tuple.fromBytes(kv.getKey()).getString(4));
         }

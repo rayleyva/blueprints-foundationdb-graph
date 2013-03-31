@@ -20,7 +20,7 @@ public class AutoIndexer {
             Iterable<Vertex> vertices = graph.getVertices();
             for (Vertex v : vertices) {
                 if (v.getPropertyKeys().contains(key)) {
-                    tr.set(new KeyBuilder(graph).add("kid").add(Namespace.VERTEX).add(key).addObject(v.getProperty(key)).add(v).build(), "".getBytes());
+                    tr.set(buildKeyIndexKey(v, key, v.getProperty(key)), "".getBytes());        // todo transactional
                 }
             }
             tr.commit().get();
@@ -29,7 +29,7 @@ public class AutoIndexer {
             Iterable<Edge> edges = graph.getEdges();
             for (Edge e : edges) {
                 if (e.getPropertyKeys().contains(key)) {
-                    tr.set(new KeyBuilder(graph).add("kid").add(Namespace.EDGE).add(key).addObject(e.getProperty(key)).add(e).build(), "".getBytes());
+                    tr.set(buildKeyIndexKey(e, key, e.getProperty(key)), "".getBytes()); // todo transactional
                 }
             }
             tr.commit().get();
@@ -40,21 +40,24 @@ public class AutoIndexer {
     public void autoRemove(Element e, Transaction tr) {
         for (String key : e.getPropertyKeys()) {
             if (graph.hasKeyIndex(key, FoundationDBGraphUtils.getElementType(e))) {
-                tr.clear(new KeyBuilder(graph).add("kid").add(FoundationDBGraphUtils.getElementTypeCode(e)).add(key).addObject(e.getProperty(key)).add(e).build());
+                tr.clear(buildKeyIndexKey(e, key, e.getProperty(key)));       // todo transactional
             }
         }
     }
 
     public void autoRemove(Element e, String key, Object value, Transaction tr) {
         if (graph.hasKeyIndex(key, FoundationDBGraphUtils.getElementType(e))) {
-            tr.clear(new KeyBuilder(graph).add("kid").add(FoundationDBGraphUtils.getElementTypeCode(e)).add(key).addObject(value).add(e).build());
+            tr.clear(buildKeyIndexKey(e, key, value));
         }
     }
 
     public void autoAdd(Element e, String key, Object value, Transaction tr) {
         if (graph.hasKeyIndex(key, FoundationDBGraphUtils.getElementType(e))) {
-            tr.set(new KeyBuilder(graph).add("kid").add(FoundationDBGraphUtils.getElementTypeCode(e)).add(key).addObject(value).add(e).build(), "".getBytes());
+            tr.set(buildKeyIndexKey(e, key, value), "".getBytes());
         }
     }
 
+    private byte[] buildKeyIndexKey(Element e, String key, Object value) {
+        return KeyBuilder.keyIndexKeyDataPrefix(graph, FoundationDBGraphUtils.getElementType(e), key).addObject(value).add(e).build();
+    }
 }
