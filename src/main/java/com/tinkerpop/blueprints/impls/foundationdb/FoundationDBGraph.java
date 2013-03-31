@@ -8,9 +8,8 @@ import com.foundationdb.Database;
 import com.foundationdb.FDB;
 import com.foundationdb.Transaction;
 import com.foundationdb.tuple.Tuple;
-import com.tinkerpop.blueprints.impls.foundationdb.util.ElementType;
-import com.tinkerpop.blueprints.impls.foundationdb.util.FoundationDBGraphUtils;
 import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
+import com.tinkerpop.blueprints.impls.foundationdb.util.Namespace;
 import com.tinkerpop.blueprints.util.PropertyFilteredIterable;
 
 public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
@@ -71,12 +70,12 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
     private void prepareKeyIndexCache() {
         this.vertexKeyIndices = new TreeSet<String>();
         Transaction tr = db.createTransaction();
-        List<KeyValue> kvs = tr.getRangeStartsWith(new KeyBuilder(this).add("ki").add(ElementType.VERTEX).build()).asList().get();
+        List<KeyValue> kvs = tr.getRangeStartsWith(new KeyBuilder(this).add("ki").add(Namespace.VERTEX).build()).asList().get();
         for (KeyValue kv : kvs) {
             this.vertexKeyIndices.add(Tuple.fromBytes(kv.getKey()).getString(4));
         }
         this.edgeKeyIndices = new TreeSet<String>();
-        kvs = tr.getRangeStartsWith(new KeyBuilder(this).add("ki").add(ElementType.EDGE).build()).asList().get();
+        kvs = tr.getRangeStartsWith(new KeyBuilder(this).add("ki").add(Namespace.EDGE).build()).asList().get();
         for (KeyValue kv : kvs) {
             this.edgeKeyIndices.add(Tuple.fromBytes(kv.getKey()).getString(4));
         }
@@ -93,11 +92,11 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
         if (id != null) e = new FoundationDBEdge(this, id.toString());
         else e = new FoundationDBEdge(this);
         Transaction tr = db.createTransaction();
-        tr.set(new KeyBuilder(this).add(ElementType.EDGE).add(e).build(), label.getBytes());
-        tr.set(new KeyBuilder(this).add(Direction.IN).add(ElementType.EDGE).add(e.getId()).build(), inVertex.getId().toString().getBytes());
-        tr.set(new KeyBuilder(this).add(Direction.OUT).add(ElementType.EDGE).add(e.getId()).build(), outVertex.getId().toString().getBytes());
-        tr.set(new KeyBuilder(this).add(Direction.IN).add(ElementType.VERTEX).add(inVertex).add(e).build(), "".getBytes());
-        tr.set(new KeyBuilder(this).add(Direction.OUT).add(ElementType.VERTEX).add(outVertex).add(e).build(), "".getBytes());
+        tr.set(new KeyBuilder(this).add(Namespace.EDGE).add(e).build(), label.getBytes());
+        tr.set(new KeyBuilder(this).add(Direction.IN).add(Namespace.EDGE).add(e).build(), inVertex.getId().toString().getBytes());
+        tr.set(new KeyBuilder(this).add(Direction.OUT).add(Namespace.EDGE).add(e).build(), outVertex.getId().toString().getBytes());
+        tr.set(new KeyBuilder(this).add(Direction.IN).add(Namespace.VERTEX).add(inVertex).add(e).build(), "".getBytes());
+        tr.set(new KeyBuilder(this).add(Direction.OUT).add(Namespace.VERTEX).add(outVertex).add(e).build(), "".getBytes());
         tr.commit().get();
         return e;
 	}
@@ -108,7 +107,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 		if (id != null) v = new FoundationDBVertex(this, id.toString());
         else v = new FoundationDBVertex(this);
 		Transaction tr = db.createTransaction();
-		tr.set(new KeyBuilder(this).add(ElementType.VERTEX).add(v).build(), v.getId().getBytes());
+		tr.set(new KeyBuilder(this).add(Namespace.VERTEX).add(v).build(), v.getId().getBytes());
         tr.commit().get();
 		return v;
 	}
@@ -125,7 +124,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 	public Iterable<Edge> getEdges() {
         List<Edge> edges = new ArrayList<Edge>();
         Transaction tr = db.createTransaction();
-        List<KeyValue> keyValueList = tr.getRangeStartsWith(new KeyBuilder(this).add(ElementType.EDGE).build()).asList().get();
+        List<KeyValue> keyValueList = tr.getRangeStartsWith(new KeyBuilder(this).add(Namespace.EDGE).build()).asList().get();
         for (KeyValue kv: keyValueList) {
             edges.add(new FoundationDBEdge(this, Tuple.fromBytes(kv.getKey()).getString(3)));
         }
@@ -135,7 +134,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 	public Iterable<Edge> getEdges(String key, Object value) {
         if (this.hasKeyIndex(key, Edge.class)) {
             Transaction tr = db.createTransaction();
-            List<KeyValue> kvs = tr.getRangeStartsWith(new KeyBuilder(this).add("kid").add(ElementType.EDGE).add(key).addObject(value).build()).asList().get();
+            List<KeyValue> kvs = tr.getRangeStartsWith(new KeyBuilder(this).add("kid").add(Namespace.EDGE).add(key).addObject(value).build()).asList().get();
             ArrayList<Edge> edges = new ArrayList<Edge>();
             for (KeyValue kv : kvs) {
                 edges.add(new FoundationDBEdge(this, Tuple.fromBytes(kv.getKey()).getString(6)));
@@ -157,19 +156,19 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 
     private Boolean hasVertex(Vertex v) {
         Transaction tr = db.createTransaction();
-        return tr.get(new KeyBuilder(this).add(ElementType.VERTEX).add(v).build()).get() != null;
+        return tr.get(new KeyBuilder(this).add(Namespace.VERTEX).add(v).build()).get() != null;
     }
 
     private Boolean hasEdge(Edge e) {
         Transaction tr = db.createTransaction();
-        return tr.get(new KeyBuilder(this).add(ElementType.EDGE).add(e).build()).get() != null;
+        return tr.get(new KeyBuilder(this).add(Namespace.EDGE).add(e).build()).get() != null;
     }
 
 	@Override
 	public Iterable<Vertex> getVertices() {
         List<Vertex> vertices = new ArrayList<Vertex>();
         Transaction tr = db.createTransaction();
-        List<KeyValue> keyValueList = tr.getRangeStartsWith(new KeyBuilder(this).add(ElementType.VERTEX).build()).asList().get();
+        List<KeyValue> keyValueList = tr.getRangeStartsWith(new KeyBuilder(this).add(Namespace.VERTEX).build()).asList().get();
         for (KeyValue kv: keyValueList) {
             vertices.add(new FoundationDBVertex(this, new String(kv.getValue())));
         }
@@ -180,7 +179,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 	public Iterable<Vertex> getVertices(String key, Object value) {
         if (this.hasKeyIndex(key, Vertex.class)) {
             Transaction tr = db.createTransaction();
-            List<KeyValue> kvs = tr.getRangeStartsWith(new KeyBuilder(this).add("kid").add(ElementType.VERTEX).add(key).addObject(value).build()).asList().get();
+            List<KeyValue> kvs = tr.getRangeStartsWith(new KeyBuilder(this).add("kid").add(Namespace.VERTEX).add(key).addObject(value).build()).asList().get();
             ArrayList<Vertex> vertices = new ArrayList<Vertex>();
             for (KeyValue kv : kvs) {
                 vertices.add(new FoundationDBVertex(this, Tuple.fromBytes(kv.getKey()).getString(6)));
@@ -204,18 +203,18 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
         Transaction tr = db.createTransaction();
         Vertex inVertex = e.getVertex(Direction.IN);
         Vertex outVertex = e.getVertex(Direction.OUT);
-        tr.clear(new KeyBuilder(this).add(Direction.IN).add(ElementType.VERTEX).add(inVertex).add(e).build());
-        tr.clear(new KeyBuilder(this).add(Direction.OUT).add(ElementType.VERTEX).add(outVertex).add(e).build());
-        tr.clearRangeStartsWith(new KeyBuilder(this).add(ElementType.EDGE).add(e).build());
-        tr.clearRangeStartsWith(new KeyBuilder(this).add(Direction.IN).add(ElementType.EDGE).add(e).build());
-        tr.clearRangeStartsWith(new KeyBuilder(this).add(Direction.OUT).add(ElementType.EDGE).add(e).build());
-        tr.clearRangeStartsWith(new KeyBuilder(this).add("p").add(ElementType.EDGE).add(e).build());
+        tr.clear(new KeyBuilder(this).add(Namespace.IN).add(Namespace.VERTEX).add(inVertex).add(e).build());
+        tr.clear(new KeyBuilder(this).add(Namespace.OUT).add(Namespace.VERTEX).add(outVertex).add(e).build());
+        tr.clearRangeStartsWith(new KeyBuilder(this).add(Namespace.EDGE).add(e).build());
+        tr.clearRangeStartsWith(new KeyBuilder(this).add(Namespace.IN).add(Namespace.EDGE).add(e).build());
+        tr.clearRangeStartsWith(new KeyBuilder(this).add(Namespace.OUT).add(Namespace.EDGE).add(e).build());
+        tr.clearRangeStartsWith(new KeyBuilder(this).add("p").add(Namespace.EDGE).add(e).build());
         for (String key : e.getPropertyKeys()) {
             if (hasKeyIndex(key, Edge.class)) {
-                tr.clear(new KeyBuilder(this).add("kid").add(ElementType.EDGE).add(key).addObject(e.getProperty(key)).add(e).build());
+                tr.clear(new KeyBuilder(this).add("kid").add(Namespace.EDGE).add(key).addObject(e.getProperty(key)).add(e).build());
             }
         }
-        byte[] reverseIndexKey = new KeyBuilder(this).add("ri").add(ElementType.EDGE).add(e).build();
+        byte[] reverseIndexKey = new KeyBuilder(this).add("ri").add(Namespace.EDGE).add(e).build();
         List<KeyValue> reverseIndexValues = tr.getRangeStartsWith(reverseIndexKey).asList().get();
         for (KeyValue kv : reverseIndexValues) {
             FoundationDBIndex<Edge> index = new FoundationDBIndex<Edge>(Tuple.fromBytes(kv.getKey()).getString(5), Edge.class, this);
@@ -232,16 +231,16 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
             if (hasEdge(e)) this.removeEdge(e);
         }
         Transaction tr = db.createTransaction();
-        tr.clearRangeStartsWith(new KeyBuilder(this).add(ElementType.VERTEX).add(v).build());
-        tr.clearRangeStartsWith(new KeyBuilder(this).add("in").add(ElementType.VERTEX).add(v).build());
-        tr.clearRangeStartsWith(new KeyBuilder(this).add("out").add(ElementType.VERTEX).add(v).build());
-        tr.clearRangeStartsWith(new KeyBuilder(this).add("p").add(ElementType.VERTEX).add(v).build());
+        tr.clearRangeStartsWith(new KeyBuilder(this).add(Namespace.VERTEX).add(v).build());
+        tr.clearRangeStartsWith(new KeyBuilder(this).add("in").add(Namespace.VERTEX).add(v).build());
+        tr.clearRangeStartsWith(new KeyBuilder(this).add("out").add(Namespace.VERTEX).add(v).build());
+        tr.clearRangeStartsWith(new KeyBuilder(this).add("p").add(Namespace.VERTEX).add(v).build());
         for (String key : v.getPropertyKeys()) {
             if (hasKeyIndex(key, Vertex.class)) {
-                tr.clear(new KeyBuilder(this).add("kid").add(ElementType.VERTEX).add(key).addObject(v.getProperty(key)).add(v).build());
+                tr.clear(new KeyBuilder(this).add("kid").add(Namespace.VERTEX).add(key).addObject(v.getProperty(key)).add(v).build());
             }
         }
-        byte[] reverseIndexKey = new KeyBuilder(this).add("ri").add(ElementType.VERTEX).add(v).build();
+        byte[] reverseIndexKey = new KeyBuilder(this).add("ri").add(Namespace.VERTEX).add(v).build();
         List<KeyValue> reverseIndexValues = tr.getRangeStartsWith(reverseIndexKey).asList().get();
         for (KeyValue kv : reverseIndexValues) {
             FoundationDBIndex<Vertex> index = new FoundationDBIndex<Vertex>(Tuple.fromBytes(kv.getKey()).getString(5), Vertex.class, this);
@@ -333,7 +332,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
             Iterable<Vertex> vertices = this.getVertices();
             for (Vertex v : vertices) {
                 if (v.getPropertyKeys().contains(key)) {
-                    tr.set(new KeyBuilder(this).add("kid").add(ElementType.VERTEX).add(key).addObject(v.getProperty(key)).add(v).build(), "".getBytes());
+                    tr.set(new KeyBuilder(this).add("kid").add(Namespace.VERTEX).add(key).addObject(v.getProperty(key)).add(v).build(), "".getBytes());
                 }
             }
             tr.commit().get();
@@ -343,7 +342,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
             Iterable<Edge> edges = this.getEdges();
             for (Edge e : edges) {
                 if (e.getPropertyKeys().contains(key)) {
-                    tr.set(new KeyBuilder(this).add("kid").add(ElementType.EDGE).add(key).addObject(e.getProperty(key)).add(e).build(), "".getBytes());
+                    tr.set(new KeyBuilder(this).add("kid").add(Namespace.EDGE).add(key).addObject(e.getProperty(key)).add(e).build(), "".getBytes());
                 }
             }
             tr.commit().get();

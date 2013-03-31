@@ -31,8 +31,8 @@ public class KeyBuilder {
         return this;
     }
 
-    public KeyBuilder add(ElementType e) {
-        tuple = tuple.add(e.value);
+    public KeyBuilder add(Namespace n) {
+        tuple = tuple.add(n.value);
         return this;
     }
 
@@ -47,7 +47,8 @@ public class KeyBuilder {
     }
 
     public KeyBuilder add(Class<? extends Element> elementClass) {
-        return this.add(FoundationDBGraphUtils.getElementType(elementClass));
+        tuple = tuple.add(FoundationDBGraphUtils.getElementTypeCode(elementClass));
+        return this;
     }
 
     public <T extends Element> KeyBuilder add(T element) {

@@ -3,14 +3,14 @@ package com.tinkerpop.blueprints.impls.foundationdb.util;
 /**
  * Created with IntelliJ IDEA.
  * User: will
- * Date: 3/30/13
- * Time: 5:51 PM
+ * Date: 3/31/13
+ * Time: 9:38 AM
  * To change this template use File | Settings | File Templates.
  */
-public enum ElementType {
-    VERTEX(1), EDGE(2);
+public enum Namespace {
+    VERTEX(1), EDGE(2), IN(3), OUT(4), BOTH(5);
 
-    private ElementType(int value) {
+    private Namespace(int value) {
         this.value = value;
     }
 

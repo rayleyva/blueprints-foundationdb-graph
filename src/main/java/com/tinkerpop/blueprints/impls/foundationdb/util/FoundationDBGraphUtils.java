@@ -29,17 +29,17 @@ public class FoundationDBGraphUtils {
         else throw new IllegalArgumentException();
     }
 
-    public static ElementType getElementType(Class elementClass) {
-        if (elementClass.equals(Vertex.class)) return ElementType.VERTEX;
-        else if (elementClass.equals(Edge.class)) return ElementType.EDGE;
+    public static int getElementTypeCode(Class elementClass) {
+        if (elementClass.equals(Vertex.class)) return Namespace.VERTEX.value;
+        else if (elementClass.equals(Edge.class)) return Namespace.EDGE.value;
         else throw new IllegalStateException();
     }
 
     public static int getDirectionCode(Direction d) {
         switch (d) {
-            case IN: return 0;
-            case OUT: return 1;
-            case BOTH: return 2;
+            case IN: return Namespace.IN.value;
+            case OUT: return Namespace.OUT.value;
+            case BOTH: return Namespace.BOTH.value;
         }
         throw new IllegalArgumentException();
     }

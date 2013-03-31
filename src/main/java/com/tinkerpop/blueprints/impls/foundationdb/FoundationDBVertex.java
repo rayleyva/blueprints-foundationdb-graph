@@ -5,20 +5,14 @@ import java.util.*;
 import com.foundationdb.KeyValue;
 import com.tinkerpop.blueprints.*;
 import com.foundationdb.tuple.Tuple;
-import com.foundationdb.Database;
 import com.foundationdb.Transaction;
-import com.tinkerpop.blueprints.impls.foundationdb.util.ElementType;
 import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
+import com.tinkerpop.blueprints.impls.foundationdb.util.Namespace;
 
 public class FoundationDBVertex extends FoundationDBElement implements Vertex {
     @Override
     public Class <? extends Element> getAbstractClass() {
         return Vertex.class;
-    }
-
-    @Override
-    public ElementType getElementType() {
-        return ElementType.VERTEX;
     }
 
 	public FoundationDBVertex(FoundationDBGraph g, String vID) {
@@ -87,7 +81,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
     private ArrayList<Edge> getDirectionEdges(final Direction d, final String... labels) {
         ArrayList<Edge> edges = new ArrayList<Edge>();
         Transaction tr = g.db.createTransaction();
-        List<KeyValue> edgeKeys = tr.getRangeStartsWith(new KeyBuilder(g).add(d).add(ElementType.VERTEX).add(this).build()).asList().get();
+        List<KeyValue> edgeKeys = tr.getRangeStartsWith(new KeyBuilder(g).add(d).add(Namespace.VERTEX).add(this).build()).asList().get();
         for (KeyValue kv : edgeKeys) {
             FoundationDBEdge e = new FoundationDBEdge(g, Tuple.fromBytes(kv.getKey()).getString(5));
             if (labels.length == 0) {
