@@ -6,6 +6,7 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.foundationdb.util.ElementType;
+import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
 
 public class FoundationDBEdge extends FoundationDBElement implements Edge {
     @Override
@@ -30,19 +31,14 @@ public class FoundationDBEdge extends FoundationDBElement implements Edge {
 	@Override
 	public String getLabel() {
         Transaction tr = g.db.createTransaction();
-        return new String(tr.get(g.graphPrefix().add(ElementType.EDGE.value).add(this.getId()).pack()).get());
+        return new String(tr.get(new KeyBuilder(g).add(ElementType.EDGE).add(getId()).build()).get());
 	}
 
 	@Override
 	public Vertex getVertex(Direction direction) throws IllegalArgumentException {
-		if (direction.equals(Direction.IN)) {
+		if (direction.equals(Direction.IN) || direction.equals((Direction.OUT))) {
             Transaction tr = g.db.createTransaction();
-            String vertexID = new String(tr.get(g.graphPrefix().add("in").add(ElementType.EDGE.value).add(this.getId()).pack()).get());
-            return new FoundationDBVertex(g, vertexID);
-        }
-        else if (direction.equals(Direction.OUT)) {
-            Transaction tr = g.db.createTransaction();
-            String vertexID = new String(tr.get(g.graphPrefix().add("out").add(ElementType.EDGE.value).add(this.getId()).pack()).get());
+            String vertexID = new String(tr.get(new KeyBuilder(g).add(direction).add(ElementType.EDGE).add(getId()).build()).get());
             return new FoundationDBVertex(g, vertexID);
         }
         else throw new IllegalArgumentException();

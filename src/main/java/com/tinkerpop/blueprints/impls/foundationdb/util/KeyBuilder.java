@@ -2,6 +2,7 @@ package com.tinkerpop.blueprints.impls.foundationdb.util;
 
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.impls.foundationdb.FoundationDBGraph;
 
@@ -41,8 +42,12 @@ public class KeyBuilder {
     }
 
     public KeyBuilder addObject(Object value) {
-        tuple.addObject(FoundationDBGraphUtils.getStoreableValue(value));
+        tuple = tuple.addObject(FoundationDBGraphUtils.getStoreableValue(value));
         return this;
+    }
+
+    public KeyBuilder add(Class<? extends Element> elementClass) {
+        return this.add(FoundationDBGraphUtils.getElementType(elementClass));
     }
 
     public byte[] build() {

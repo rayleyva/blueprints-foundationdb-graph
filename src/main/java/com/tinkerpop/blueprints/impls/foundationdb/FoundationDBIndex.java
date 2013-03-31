@@ -4,8 +4,7 @@ import com.foundationdb.KeyValue;
 import com.foundationdb.Transaction;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.*;
-import com.tinkerpop.blueprints.impls.foundationdb.util.ElementType;
-import com.tinkerpop.blueprints.impls.foundationdb.util.FoundationDBGraphUtils;
+import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +40,7 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
 
     public void put(String key, Object value, T element) {
         Transaction tr = g.db.createTransaction();
-        tr.set(getRawIndexKey(key, value).add(element.getId().toString()).pack(), "".getBytes());
+        tr.set(getRawIndexKey(key, value).add(element.getId().toString()).build(), "".getBytes());
         tr.set(getRawReverseIndexKey(element, key, value), "".getBytes());
         tr.commit().get();
     }
@@ -50,7 +49,7 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
     public CloseableIterable<T> get(String key, Object value) {
         ArrayList<T> items = new ArrayList<T>();
         Transaction tr = g.db.createTransaction();
-        List<KeyValue> existingValues = tr.getRangeStartsWith(getRawIndexKey(key, value).pack()).asList().get();
+        List<KeyValue> existingValues = tr.getRangeStartsWith(getRawIndexKey(key, value).build()).asList().get();
         for (KeyValue kv : existingValues) {
             String name = Tuple.fromBytes(kv.getKey()).getString(6);
             if (this.getIndexClass().equals(Vertex.class)) items.add((T) new FoundationDBVertex(g, name));
@@ -67,22 +66,22 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
 
     public long count(String key, Object value) {
         Transaction tr = g.db.createTransaction();
-        List<KeyValue> existingValues = tr.getRangeStartsWith(getRawIndexKey(key, value).pack()).asList().get();
+        List<KeyValue> existingValues = tr.getRangeStartsWith(getRawIndexKey(key, value).build()).asList().get();
         return existingValues.size();
     }
 
 
     public void remove(String key, Object value, T element) {
         Transaction tr = g.db.createTransaction();
-        tr.clear(getRawIndexKey(key, value).add(element.getId().toString()).pack());
+        tr.clear(getRawIndexKey(key, value).add(element.getId().toString()).build());
         tr.commit().get();
     }
 
-    private Tuple getRawIndexKey(String key, Object value) {          // todo separate keyspaces!
-        return g.graphPrefix().add("iv").add(this.getIndexName()).add(key).addObject(FoundationDBGraphUtils.getStoreableValue(value));
+    private KeyBuilder getRawIndexKey(String key, Object value) {          // todo separate keyspaces!
+        return new KeyBuilder(g).add("iv").add(getIndexName()).add(key).addObject(value);
     }
 
     private byte[] getRawReverseIndexKey(T e, String key, Object value) {
-        return g.graphPrefix().add("ri").add(FoundationDBGraphUtils.getElementType(indexClass).value).add(e.getId().toString()).add(this.getIndexName()).add(key).addObject(FoundationDBGraphUtils.getStoreableValue(value)).pack();
+        return new KeyBuilder(g).add("ri").add(indexClass).add(e.getId().toString()).add(getIndexName()).add(key).addObject(value).build();
     }
 }
