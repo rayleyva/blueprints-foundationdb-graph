@@ -12,13 +12,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-/**
- * Created with IntelliJ IDEA.
- * User: will
- * Date: 3/31/13
- * Time: 1:21 PM
- * To change this template use File | Settings | File Templates.
- */
 public class KeyIndexCache {
     private Set<String> vertexKeyIndices;
     private Set<String> edgeKeyIndices;

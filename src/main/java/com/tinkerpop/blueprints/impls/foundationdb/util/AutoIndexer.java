@@ -6,13 +6,6 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.foundationdb.FoundationDBGraph;
 
-/**
- * Created with IntelliJ IDEA.
- * User: will
- * Date: 3/31/13
- * Time: 1:47 PM
- * To change this template use File | Settings | File Templates.
- */
 public class AutoIndexer {
 
     private FoundationDBGraph graph;

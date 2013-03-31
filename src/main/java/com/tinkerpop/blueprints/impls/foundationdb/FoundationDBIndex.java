@@ -10,13 +10,6 @@ import com.tinkerpop.blueprints.impls.foundationdb.util.Namespace;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: will
- * Date: 3/28/13
- * Time: 4:51 PM
- * To change this template use File | Settings | File Templates.
- */
 public class FoundationDBIndex<T extends Element> implements Index<T> {
 
     private String name;

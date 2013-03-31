@@ -3,17 +3,8 @@ package com.tinkerpop.blueprints.impls.foundationdb.util;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.Graph;
-import com.tinkerpop.blueprints.impls.foundationdb.FoundationDBElement;
 import com.tinkerpop.blueprints.impls.foundationdb.FoundationDBGraph;
 
-/**
- * Created with IntelliJ IDEA.
- * User: will
- * Date: 3/30/13
- * Time: 8:04 PM
- * To change this template use File | Settings | File Templates.
- */
 public class KeyBuilder {
 
     private Tuple tuple;
