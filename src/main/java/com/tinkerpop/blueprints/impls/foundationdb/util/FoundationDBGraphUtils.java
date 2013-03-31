@@ -30,6 +30,28 @@ public class FoundationDBGraphUtils {
         else throw new IllegalArgumentException();
     }
 
+    public static String getValueTypeString(Object value) {
+        if (value instanceof String) {
+            return "string";
+        }
+        else if (value instanceof Integer) {
+            return "integer";
+        }
+        else if (value instanceof Long) {
+            return "long";
+        }
+        else if (value instanceof Double) {
+            return "double";
+        }
+        else if (value instanceof Float) {
+            return "float";
+        }
+        else if (value instanceof Boolean) {
+            return "boolean";
+        }
+        else throw new IllegalArgumentException();
+    }
+
     public static int getElementTypeCode(Class elementClass) {
         if (elementClass.equals(Vertex.class)) return Namespace.VERTEX.value;
         else if (elementClass.equals(Edge.class)) return Namespace.EDGE.value;

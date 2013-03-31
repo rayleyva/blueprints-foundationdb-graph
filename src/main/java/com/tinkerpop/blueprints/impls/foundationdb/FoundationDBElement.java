@@ -8,6 +8,7 @@ import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.impls.foundationdb.util.FoundationDBGraphUtils;
 import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
+import com.tinkerpop.blueprints.impls.foundationdb.util.Namespace;
 
 public abstract class FoundationDBElement implements Element {
 
@@ -42,7 +43,7 @@ public abstract class FoundationDBElement implements Element {
 	@Override
 	public Set<String> getPropertyKeys() {
         Transaction tr = g.db.createTransaction();
-        List<KeyValue> l = tr.getRangeStartsWith(new KeyBuilder(g).add("p").add(getAbstractClass()).add(this).build()).asList().get();
+        List<KeyValue> l = tr.getRangeStartsWith(KeyBuilder.propertyKeyPrefix(g, this).build()).asList().get();
         Set<String> keySet = new TreeSet<String>();
         for (KeyValue kv : l) {
             keySet.add(Tuple.fromBytes(kv.getKey()).getString(5));
@@ -70,28 +71,10 @@ public abstract class FoundationDBElement implements Element {
 	public void setProperty(String key, Object value) {
         if (!(value instanceof String || value instanceof Number || value instanceof Boolean)) throw new IllegalArgumentException();
         if (key.equals("") || key.toLowerCase().equals("id") || key.toLowerCase().equals("label") || key == null) throw new IllegalArgumentException();
-        String valueType;
+        String valueType = FoundationDBGraphUtils.getValueTypeString(value);
+        Object storeableValue = FoundationDBGraphUtils.getStoreableValue(value);
         Transaction tr = g.db.createTransaction();
-        if (value instanceof String) {
-            valueType = "string";
-        }
-        else if (value instanceof Integer) {
-            valueType = "integer";
-        }
-        else if (value instanceof Long) {
-            valueType = "long";
-        }
-        else if (value instanceof Double) {
-            valueType = "double";
-        }
-        else if (value instanceof Float) {
-            valueType = "float";
-        }
-        else if (value instanceof Boolean) {
-            valueType = "boolean";
-        }
-        else throw new IllegalArgumentException();
-        tr.set(this.getRawKey(key), new Tuple().add(valueType).addObject(FoundationDBGraphUtils.getStoreableValue(value)).pack());
+        tr.set(this.getRawKey(key), new Tuple().add(valueType).addObject(storeableValue).pack());
         if (g.hasKeyIndex(key, this.getAbstractClass())) {
             tr.set(new KeyBuilder(g).add("kid").add(getAbstractClass()).add(key).addObject(value).add(this).build(), "".getBytes());
         }
@@ -132,7 +115,7 @@ public abstract class FoundationDBElement implements Element {
     public abstract Class <? extends Element> getAbstractClass();
 
     private byte[] getRawKey(String key) {
-        return new KeyBuilder(g).add("p").add(getAbstractClass()).add(this).add(key).build();
+        return KeyBuilder.propertyKeyPrefix(g, this).add(key).build();
     }
 
 }

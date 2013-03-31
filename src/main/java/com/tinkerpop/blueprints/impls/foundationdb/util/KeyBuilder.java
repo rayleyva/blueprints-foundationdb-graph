@@ -65,4 +65,8 @@ public class KeyBuilder {
         return new KeyBuilder(g).add(d).add(FoundationDBGraphUtils.getElementTypeCode(e)).add(e);
     }
 
+    public static KeyBuilder propertyKeyPrefix(FoundationDBGraph g, Element e) {
+        return new KeyBuilder(g).add(Namespace.PROPERTIES).add(FoundationDBGraphUtils.getElementTypeCode(e)).add(e);
+    }
+
 }

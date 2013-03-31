@@ -205,7 +205,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
         tr.clearRangeStartsWith(new KeyBuilder(this).add(Namespace.EDGE).add(e).build());
         tr.clearRangeStartsWith(KeyBuilder.directionKeyPrefix(this, Direction.IN, e).build());
         tr.clearRangeStartsWith(KeyBuilder.directionKeyPrefix(this, Direction.OUT, e).build());
-        tr.clearRangeStartsWith(new KeyBuilder(this).add("p").add(Namespace.EDGE).add(e).build());
+        tr.clearRangeStartsWith(KeyBuilder.propertyKeyPrefix(this, e).build());
         for (String key : e.getPropertyKeys()) {
             if (hasKeyIndex(key, Edge.class)) {
                 tr.clear(new KeyBuilder(this).add("kid").add(Namespace.EDGE).add(key).addObject(e.getProperty(key)).add(e).build());
@@ -231,7 +231,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
         tr.clearRangeStartsWith(new KeyBuilder(this).add(Namespace.VERTEX).add(v).build());
         tr.clearRangeStartsWith(KeyBuilder.directionKeyPrefix(this, Direction.IN, v).build());
         tr.clearRangeStartsWith(KeyBuilder.directionKeyPrefix(this, Direction.OUT, v).build());
-        tr.clearRangeStartsWith(new KeyBuilder(this).add("p").add(Namespace.VERTEX).add(v).build());
+        tr.clearRangeStartsWith(KeyBuilder.propertyKeyPrefix(this, v).build());
         for (String key : v.getPropertyKeys()) {
             if (hasKeyIndex(key, Vertex.class)) {
                 tr.clear(new KeyBuilder(this).add("kid").add(Namespace.VERTEX).add(key).addObject(v.getProperty(key)).add(v).build());
