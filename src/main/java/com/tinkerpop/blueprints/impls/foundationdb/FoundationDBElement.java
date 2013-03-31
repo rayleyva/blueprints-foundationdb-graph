@@ -60,9 +60,7 @@ public abstract class FoundationDBElement implements Element {
         Transaction tr = g.db.createTransaction();
 		T value = this.getProperty(key);
         tr.clearRangeStartsWith(this.getRawKey(key));
-        if (g.hasKeyIndex(key, this.getAbstractClass())) {
-            tr.clear(new KeyBuilder(g).add("kid").add(getAbstractClass()).add(key).addObject(value).add(this).build());
-        }
+        g.getAutoIndexer().autoRemove(this, key, value, tr);
         tr.commit().get();
         return value;
 	}
@@ -75,9 +73,7 @@ public abstract class FoundationDBElement implements Element {
         Object storeableValue = FoundationDBGraphUtils.getStoreableValue(value);
         Transaction tr = g.db.createTransaction();
         tr.set(this.getRawKey(key), new Tuple().add(valueType).addObject(storeableValue).pack());
-        if (g.hasKeyIndex(key, this.getAbstractClass())) {
-            tr.set(new KeyBuilder(g).add("kid").add(getAbstractClass()).add(key).addObject(value).add(this).build(), "".getBytes());
-        }
+        g.getAutoIndexer().autoAdd(this, key, value, tr);
         tr.commit().get();
     }
 

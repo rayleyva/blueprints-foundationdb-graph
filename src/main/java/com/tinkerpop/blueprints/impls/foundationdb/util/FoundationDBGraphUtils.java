@@ -52,15 +52,35 @@ public class FoundationDBGraphUtils {
         else throw new IllegalArgumentException();
     }
 
-    public static int getElementTypeCode(Class elementClass) {
-        if (elementClass.equals(Vertex.class)) return Namespace.VERTEX.value;
-        else if (elementClass.equals(Edge.class)) return Namespace.EDGE.value;
+    public static ElementType getElementType(Element e) {
+        if (e instanceof Vertex) return ElementType.VERTEX;
+        else if (e instanceof Edge) return ElementType.EDGE;
+        else throw new IllegalStateException();
+    }
+
+    public static ElementType getElementType(Class<? extends Element> elementClass) {
+        if (elementClass.equals(Vertex.class)) return ElementType.VERTEX;
+        else if (elementClass.equals(Edge.class)) return ElementType.EDGE;
         else throw new IllegalStateException();
     }
 
     public static int getElementTypeCode(Element e) {
         if (e instanceof Vertex) return Namespace.VERTEX.value;
         else if (e instanceof Edge) return Namespace.EDGE.value;
+        else throw new IllegalStateException();
+    }
+
+    public static int getElementTypeCode(ElementType t) {
+        switch (t) {
+            case VERTEX: return Namespace.VERTEX.value;
+            case EDGE: return Namespace.EDGE.value;
+        }
+        throw new IllegalStateException();
+    }
+
+    public static int getElementTypeCode(Class<? extends Element> elementClass) {
+        if (elementClass.equals(Vertex.class)) return Namespace.VERTEX.value;
+        else if (elementClass.equals(Edge.class)) return Namespace.EDGE.value;
         else throw new IllegalStateException();
     }
 

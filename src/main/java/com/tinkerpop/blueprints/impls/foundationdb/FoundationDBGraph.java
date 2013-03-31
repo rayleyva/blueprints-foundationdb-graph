@@ -8,8 +8,7 @@ import com.foundationdb.Database;
 import com.foundationdb.FDB;
 import com.foundationdb.Transaction;
 import com.foundationdb.tuple.Tuple;
-import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
-import com.tinkerpop.blueprints.impls.foundationdb.util.Namespace;
+import com.tinkerpop.blueprints.impls.foundationdb.util.*;
 import com.tinkerpop.blueprints.util.PropertyFilteredIterable;
 
 public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
@@ -18,8 +17,8 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 	private FDB fdb;
 	public String graphName;
 	public static final Features FEATURES = new Features();
-    private Set<String> vertexKeyIndices;
-    private Set<String> edgeKeyIndices;
+    private KeyIndexCache keyIndexCache;
+    private AutoIndexer autoIndexer;
 	
 	static {
         FEATURES.supportsDuplicateEdges = true;
@@ -64,23 +63,9 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 		this.graphName = graphName;
 		this.fdb = FDB.selectAPIVersion(21);
 		this.db = fdb.open().get();
-        prepareKeyIndexCache();
+        this.keyIndexCache = new KeyIndexCache(this);
+        this.autoIndexer = new AutoIndexer(this);
 	}
-
-    private void prepareKeyIndexCache() {
-        this.vertexKeyIndices = new TreeSet<String>();
-        Transaction tr = db.createTransaction();
-        List<KeyValue> kvs = tr.getRangeStartsWith(new KeyBuilder(this).add("ki").add(Namespace.VERTEX).build()).asList().get();
-        for (KeyValue kv : kvs) {
-            this.vertexKeyIndices.add(Tuple.fromBytes(kv.getKey()).getString(4));
-        }
-        this.edgeKeyIndices = new TreeSet<String>();
-        kvs = tr.getRangeStartsWith(new KeyBuilder(this).add("ki").add(Namespace.EDGE).build()).asList().get();
-        for (KeyValue kv : kvs) {
-            this.edgeKeyIndices.add(Tuple.fromBytes(kv.getKey()).getString(4));
-        }
-        tr.commit().get();
-    }
 	
 	public Features getFeatures() {
 		return FEATURES;
@@ -132,7 +117,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 	}
 
 	public Iterable<Edge> getEdges(String key, Object value) {
-        if (this.hasKeyIndex(key, Edge.class)) {
+        if (this.hasKeyIndex(key, ElementType.EDGE)) {
             Transaction tr = db.createTransaction();
             List<KeyValue> kvs = tr.getRangeStartsWith(new KeyBuilder(this).add("kid").add(Namespace.EDGE).add(key).addObject(value).build()).asList().get();
             ArrayList<Edge> edges = new ArrayList<Edge>();
@@ -177,7 +162,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 
 	@Override
 	public Iterable<Vertex> getVertices(String key, Object value) {
-        if (this.hasKeyIndex(key, Vertex.class)) {
+        if (this.hasKeyIndex(key, ElementType.VERTEX)) {
             Transaction tr = db.createTransaction();
             List<KeyValue> kvs = tr.getRangeStartsWith(new KeyBuilder(this).add("kid").add(Namespace.VERTEX).add(key).addObject(value).build()).asList().get();
             ArrayList<Vertex> vertices = new ArrayList<Vertex>();
@@ -206,11 +191,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
         tr.clearRangeStartsWith(KeyBuilder.directionKeyPrefix(this, Direction.IN, e).build());
         tr.clearRangeStartsWith(KeyBuilder.directionKeyPrefix(this, Direction.OUT, e).build());
         tr.clearRangeStartsWith(KeyBuilder.propertyKeyPrefix(this, e).build());
-        for (String key : e.getPropertyKeys()) {
-            if (hasKeyIndex(key, Edge.class)) {
-                tr.clear(new KeyBuilder(this).add("kid").add(Namespace.EDGE).add(key).addObject(e.getProperty(key)).add(e).build());
-            }
-        }
+        autoIndexer.autoRemove(e, tr);
         byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.EDGE).add(e).build();
         List<KeyValue> reverseIndexValues = tr.getRangeStartsWith(reverseIndexKey).asList().get();
         for (KeyValue kv : reverseIndexValues) {
@@ -232,11 +213,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
         tr.clearRangeStartsWith(KeyBuilder.directionKeyPrefix(this, Direction.IN, v).build());
         tr.clearRangeStartsWith(KeyBuilder.directionKeyPrefix(this, Direction.OUT, v).build());
         tr.clearRangeStartsWith(KeyBuilder.propertyKeyPrefix(this, v).build());
-        for (String key : v.getPropertyKeys()) {
-            if (hasKeyIndex(key, Vertex.class)) {
-                tr.clear(new KeyBuilder(this).add("kid").add(Namespace.VERTEX).add(key).addObject(v.getProperty(key)).add(v).build());
-            }
-        }
+        autoIndexer.autoRemove(v, tr);
         byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.VERTEX).add(v).build();
         List<KeyValue> reverseIndexValues = tr.getRangeStartsWith(reverseIndexKey).asList().get();
         for (KeyValue kv : reverseIndexValues) {
@@ -309,66 +286,28 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
         tr.clear(new KeyBuilder(this).add("ki").add(elementClass).add(key).build());
         tr.clearRangeStartsWith(new KeyBuilder(this).add("kid").add(elementClass).add(key).build());
         tr.commit().get();
-        removeIndexFromCache(key, elementClass);
+        keyIndexCache.removeIndexFromCache(key, elementClass);
     }
 
 
     public <T extends Element> void createKeyIndex(String key, Class<T> elementClass, final Parameter... indexParameters) {
-        if (this.hasKeyIndex(key, elementClass)) throw new IllegalArgumentException();
+        if (this.hasKeyIndex(key, FoundationDBGraphUtils.getElementType(elementClass))) throw new IllegalArgumentException();
         Transaction tr = db.createTransaction();
         tr.set(new KeyBuilder(this).add("ki").add(elementClass).add(key).build(), "".getBytes());
+        autoIndexer.reindexElements(key, elementClass, tr);
+        keyIndexCache.addIndexToCache(key, elementClass);
         tr.commit().get();
-        reindexElements(key, elementClass);
-        addIndexToCache(key, elementClass);
     }
-
-    private void reindexElements(String key, Class<? extends Element> elementClass) {
-        Iterable<Element> elements;
-        if (elementClass.equals(Vertex.class)) {
-            Transaction tr = db.createTransaction();
-            Iterable<Vertex> vertices = this.getVertices();
-            for (Vertex v : vertices) {
-                if (v.getPropertyKeys().contains(key)) {
-                    tr.set(new KeyBuilder(this).add("kid").add(Namespace.VERTEX).add(key).addObject(v.getProperty(key)).add(v).build(), "".getBytes());
-                }
-            }
-            tr.commit().get();
-        }
-        else if (elementClass.equals(Edge.class)) {
-            Transaction tr = db.createTransaction();
-            Iterable<Edge> edges = this.getEdges();
-            for (Edge e : edges) {
-                if (e.getPropertyKeys().contains(key)) {
-                    tr.set(new KeyBuilder(this).add("kid").add(Namespace.EDGE).add(key).addObject(e.getProperty(key)).add(e).build(), "".getBytes());
-                }
-            }
-            tr.commit().get();
-        }
-        else throw new IllegalArgumentException();
-    }
-
 
     public final <T extends Element> Set<String> getIndexedKeys(Class<T> elementClass) {
-        if (elementClass.equals(Vertex.class)) return this.vertexKeyIndices;
-        else if (elementClass.equals(Edge.class)) return this.edgeKeyIndices;
-        else throw new IllegalStateException();
+        return keyIndexCache.getIndexedKeys(elementClass);
     }
 
-    private <T extends Element> void addIndexToCache(String key, Class<T> elementClass) {
-        if (elementClass.equals(Vertex.class)) this.vertexKeyIndices.add(key);
-        else if (elementClass.equals(Edge.class)) this.edgeKeyIndices.add(key);
-        else throw new IllegalStateException();
+    public boolean hasKeyIndex(String key, ElementType type) {
+        return keyIndexCache.hasKeyIndex(key, type);
     }
 
-    private <T extends Element> void removeIndexFromCache(String key, Class<T> elementClass) {
-        if (elementClass.equals(Vertex.class)) this.vertexKeyIndices.remove(key);
-        else if (elementClass.equals(Edge.class)) this.edgeKeyIndices.remove(key);
-        else throw new IllegalStateException();
-    }
-
-    public <T extends Element> boolean hasKeyIndex(String key, Class<T> elementClass) {
-        if (elementClass.equals(Vertex.class)) return this.vertexKeyIndices.contains(key);
-        else if (elementClass.equals(Edge.class)) return this.edgeKeyIndices.contains(key);
-        else throw new IllegalStateException();
+    public AutoIndexer getAutoIndexer() {
+        return this.autoIndexer;
     }
 }
