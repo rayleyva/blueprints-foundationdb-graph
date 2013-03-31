@@ -16,7 +16,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 	
 	public Database db;
 	private FDB fdb;
-	protected String graphName;
+	public String graphName;
 	public static final Features FEATURES = new Features();
     private Set<String> vertexKeyIndices;
     private Set<String> edgeKeyIndices;

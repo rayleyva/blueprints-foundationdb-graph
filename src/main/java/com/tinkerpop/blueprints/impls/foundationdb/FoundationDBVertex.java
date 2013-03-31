@@ -8,6 +8,7 @@ import com.foundationdb.tuple.Tuple;
 import com.foundationdb.Database;
 import com.foundationdb.Transaction;
 import com.tinkerpop.blueprints.impls.foundationdb.util.ElementType;
+import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
 
 public class FoundationDBVertex extends FoundationDBElement implements Vertex {
     @Override
@@ -35,37 +36,37 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	}
 
 	@Override
-	public Iterable<Edge> getEdges(Direction direction, String... labels) {
-		if (direction.equals(Direction.IN)) return getDirectionEdges("in", labels);
-        else if (direction.equals(Direction.OUT)) return getDirectionEdges("out", labels);
+	public Iterable<Edge> getEdges(Direction d, String... labels) {
+		if (d.equals(Direction.IN)) return getDirectionEdges(d, labels);
+        else if (d.equals(Direction.OUT)) return getDirectionEdges(d, labels);
         else  {
-            ArrayList<Edge> inEdges = getDirectionEdges("in", labels);
-            ArrayList<Edge> outEdges = getDirectionEdges("out", labels);
+            ArrayList<Edge> inEdges = getDirectionEdges(Direction.IN, labels);
+            ArrayList<Edge> outEdges = getDirectionEdges(Direction.OUT, labels);
             inEdges.addAll(outEdges);
             return inEdges;
         }
 	}
 
 	@Override
-	public Iterable<Vertex> getVertices(Direction direction, String... labels) {
+	public Iterable<Vertex> getVertices(Direction d, String... labels) {
 		Collection<Vertex> vertices;
-        if (direction.equals(Direction.IN)) {
-            ArrayList<Edge> edges = getDirectionEdges("in", labels);
+        if (d.equals(Direction.IN)) {
+            ArrayList<Edge> edges = getDirectionEdges(d, labels);
             vertices = new ArrayList<Vertex>();
             for (Edge e : edges) {
                 vertices.add(e.getVertex(Direction.OUT));
             }
         }
-        else if (direction.equals(Direction.OUT)) {
-            ArrayList<Edge> edges = getDirectionEdges("out", labels);
+        else if (d.equals(Direction.OUT)) {
+            ArrayList<Edge> edges = getDirectionEdges(d, labels);
             vertices = new ArrayList<Vertex>();
             for (Edge e : edges) {
                 vertices.add(e.getVertex(Direction.IN));
             }
         }
         else {
-            ArrayList<Edge> inEdges = getDirectionEdges("in", labels);
-            ArrayList<Edge> outEdges = getDirectionEdges("out", labels);
+            ArrayList<Edge> inEdges = getDirectionEdges(Direction.IN, labels);
+            ArrayList<Edge> outEdges = getDirectionEdges(Direction.OUT, labels);
             vertices = new ArrayList<Vertex>();
             for (Edge e : inEdges) {
                 vertices.add(e.getVertex(Direction.OUT));
@@ -83,10 +84,10 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 		return null;
 	}
 
-    private ArrayList<Edge> getDirectionEdges(final String direction, final String... labels) {
+    private ArrayList<Edge> getDirectionEdges(final Direction d, final String... labels) {
         ArrayList<Edge> edges = new ArrayList<Edge>();
         Transaction tr = g.db.createTransaction();
-        List<KeyValue> edgeKeys = tr.getRangeStartsWith(g.graphPrefix().add(direction).add(ElementType.VERTEX.value).add(this.getId()).pack()).asList().get();
+        List<KeyValue> edgeKeys = tr.getRangeStartsWith(new KeyBuilder(g).add(d).add(ElementType.VERTEX).add(this.getId()).build()).asList().get();
         for (KeyValue kv : edgeKeys) {
             FoundationDBEdge e = new FoundationDBEdge(g, Tuple.fromBytes(kv.getKey()).getString(5));
             if (labels.length == 0) {
