@@ -52,6 +52,12 @@ public class FoundationDBGraphUtils {
         else throw new IllegalArgumentException();
     }
 
+    public static Class getElementClass(ElementType type) {
+        if (type.equals(ElementType.EDGE)) return Edge.class;
+        else if (type.equals(ElementType.VERTEX)) return Vertex.class;
+        else throw new IllegalArgumentException();
+    }
+
     public static ElementType getElementType(Element e) {
         if (e instanceof Vertex) return ElementType.VERTEX;
         else if (e instanceof Edge) return ElementType.EDGE;

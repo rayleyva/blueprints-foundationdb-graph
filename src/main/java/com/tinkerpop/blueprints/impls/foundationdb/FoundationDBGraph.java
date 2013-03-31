@@ -11,14 +11,14 @@ import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.impls.foundationdb.util.*;
 import com.tinkerpop.blueprints.util.PropertyFilteredIterable;
 
-public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
+public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, TransactionalGraph {
 	
-	public Database db;
-	private FDB fdb;
+	private Database db;
 	public String graphName;
 	public static final Features FEATURES = new Features();
-    private KeyIndexCache keyIndexCache;
     private AutoIndexer autoIndexer;
+    private boolean hasOpenTransaction;
+    private Transaction tr;
 	
 	static {
         FEATURES.supportsDuplicateEdges = true;
@@ -32,7 +32,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
         FEATURES.supportsEdgeRetrieval = true;
         FEATURES.supportsVertexProperties = true;
         FEATURES.supportsEdgeProperties = true;
-        FEATURES.supportsTransactions = false;
+        FEATURES.supportsTransactions = true;
         FEATURES.supportsIndices = true;
 
         FEATURES.supportsSerializableObjectProperty = false;
@@ -60,11 +60,11 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 	}
 	
 	public FoundationDBGraph(String graphName) {
-		this.graphName = graphName;
-		this.fdb = FDB.selectAPIVersion(21);
+        FDB fdb = FDB.selectAPIVersion(21);
+        this.graphName = graphName;
 		this.db = fdb.open().get();
-        this.keyIndexCache = new KeyIndexCache(this);
         this.autoIndexer = new AutoIndexer(this);
+        this.hasOpenTransaction = false;
 	}
 	
 	public Features getFeatures() {
@@ -76,13 +76,12 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 		FoundationDBEdge e;
         if (id != null) e = new FoundationDBEdge(this, id.toString());
         else e = new FoundationDBEdge(this);
-        Transaction tr = db.createTransaction();
+        Transaction tr = getTransaction();
         tr.set(new KeyBuilder(this).add(Namespace.EDGE).add(e).build(), label.getBytes());
         tr.set(KeyBuilder.directionKeyPrefix(this, Direction.IN, e).build(), inVertex.getId().toString().getBytes());
         tr.set(KeyBuilder.directionKeyPrefix(this, Direction.OUT, e).build(), outVertex.getId().toString().getBytes());
         tr.set(KeyBuilder.directionKeyPrefix(this, Direction.IN, inVertex).add(e).build(), "".getBytes());
         tr.set(KeyBuilder.directionKeyPrefix(this, Direction.OUT, outVertex).add(e).build(), "".getBytes());
-        tr.commit().get();
         return e;
 	}
 
@@ -91,9 +90,8 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
         FoundationDBVertex v;
 		if (id != null) v = new FoundationDBVertex(this, id.toString());
         else v = new FoundationDBVertex(this);
-		Transaction tr = db.createTransaction();
+		Transaction tr = getTransaction();
 		tr.set(new KeyBuilder(this).add(Namespace.VERTEX).add(v).build(), v.getId().getBytes());
-        tr.commit().get();
 		return v;
 	}
 
@@ -108,7 +106,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 	@Override
 	public Iterable<Edge> getEdges() {
         List<Edge> edges = new ArrayList<Edge>();
-        Transaction tr = db.createTransaction();
+        Transaction tr = getTransaction();
         List<KeyValue> keyValueList = tr.getRangeStartsWith(new KeyBuilder(this).add(Namespace.EDGE).build()).asList().get();
         for (KeyValue kv: keyValueList) {
             edges.add(new FoundationDBEdge(this, Tuple.fromBytes(kv.getKey()).getString(3)));
@@ -118,7 +116,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 
 	public Iterable<Edge> getEdges(String key, Object value) {
         if (this.hasKeyIndex(key, ElementType.EDGE)) {
-            Transaction tr = db.createTransaction();
+            Transaction tr = getTransaction();
             List<KeyValue> kvs = tr.getRangeStartsWith(KeyBuilder.keyIndexKeyDataPrefix(this, ElementType.EDGE, key).addObject(value).build()).asList().get();
             ArrayList<Edge> edges = new ArrayList<Edge>();
             for (KeyValue kv : kvs) {
@@ -140,19 +138,19 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 	}
 
     private Boolean hasVertex(Vertex v) {
-        Transaction tr = db.createTransaction();
+        Transaction tr = getTransaction();
         return tr.get(new KeyBuilder(this).add(Namespace.VERTEX).add(v).build()).get() != null;
     }
 
     private Boolean hasEdge(Edge e) {
-        Transaction tr = db.createTransaction();
+        Transaction tr = getTransaction();
         return tr.get(new KeyBuilder(this).add(Namespace.EDGE).add(e).build()).get() != null;
     }
 
 	@Override
 	public Iterable<Vertex> getVertices() {
         List<Vertex> vertices = new ArrayList<Vertex>();
-        Transaction tr = db.createTransaction();
+        Transaction tr = getTransaction();
         List<KeyValue> keyValueList = tr.getRangeStartsWith(new KeyBuilder(this).add(Namespace.VERTEX).build()).asList().get();
         for (KeyValue kv: keyValueList) {
             vertices.add(new FoundationDBVertex(this, new String(kv.getValue())));
@@ -163,7 +161,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 	@Override
 	public Iterable<Vertex> getVertices(String key, Object value) {
         if (this.hasKeyIndex(key, ElementType.VERTEX)) {
-            Transaction tr = db.createTransaction();
+            Transaction tr = getTransaction();
             List<KeyValue> kvs = tr.getRangeStartsWith(KeyBuilder.keyIndexKeyDataPrefix(this, ElementType.VERTEX, key).addObject(value).build()).asList().get();
             ArrayList<Vertex> vertices = new ArrayList<Vertex>();
             for (KeyValue kv : kvs) {
@@ -184,7 +182,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 	@Override
 	public void removeEdge(Edge e) {
         if (!hasEdge(e)) throw new IllegalArgumentException("Edge does not exist!");
-        Transaction tr = db.createTransaction();
+        Transaction tr = getTransaction();
         tr.clear(KeyBuilder.directionKeyPrefix(this, Direction.IN, e.getVertex(Direction.IN)).add(e).build());
         tr.clear(KeyBuilder.directionKeyPrefix(this, Direction.OUT, e.getVertex(Direction.OUT)).add(e).build());
         tr.clearRangeStartsWith(new KeyBuilder(this).add(Namespace.EDGE).add(e).build());
@@ -199,7 +197,6 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
             index.remove(Tuple.fromBytes(kv.getKey()).getString(6), Tuple.fromBytes(kv.getKey()).get(7), e);
         }
         tr.clearRangeStartsWith(reverseIndexKey);
-        tr.commit().get();
 	}
 
 	@Override
@@ -208,7 +205,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 		for (Edge e : v.getEdges(Direction.BOTH)) {
             if (hasEdge(e)) this.removeEdge(e);
         }
-        Transaction tr = db.createTransaction();
+        Transaction tr = getTransaction();
         tr.clearRangeStartsWith(new KeyBuilder(this).add(Namespace.VERTEX).add(v).build());
         tr.clearRangeStartsWith(KeyBuilder.directionKeyPrefix(this, Direction.IN, v).build());
         tr.clearRangeStartsWith(KeyBuilder.directionKeyPrefix(this, Direction.OUT, v).build());
@@ -221,7 +218,6 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
             index.remove(Tuple.fromBytes(kv.getKey()).getString(6), Tuple.fromBytes(kv.getKey()).get(7), v);
         }
         tr.clearRangeStartsWith(reverseIndexKey);
-        tr.commit().get();
 	}
 
 	@Override
@@ -230,7 +226,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
 	}
 
 	public void shutdown() {
-
+        if (this.hasOpenTransaction) commit();
 	}
 
     public void purge() {
@@ -240,29 +236,28 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
     }
 
     public <T extends Element> Index<T> createIndex(String name, Class<T> type, Parameter... args) {
-        if (this.hasIndex(name, type)) throw new IllegalStateException();
-        Transaction tr = db.createTransaction();
+        FoundationDBIndex<T> index = new FoundationDBIndex<T>(name, type, this);
+        Transaction tr = getTransaction();
+        if (index.exists(name, type, tr)) throw new IllegalStateException();
         tr.set(new KeyBuilder(this).add(Namespace.INDICES).add(name).build(), type.getSimpleName().getBytes());
-        tr.commit().get();
         return new FoundationDBIndex<T>(name, type, this);
     }
 
     public <T extends Element> Index<T> getIndex(String name, Class<T> type) {
         FoundationDBIndex<T> index = new FoundationDBIndex<T>(name, type, this);
-        if (this.hasIndex(name, type)) return index;
+        if (index.exists(name, type, getTransaction())) return index;
         else return null;
     }
 
     public void dropIndex(String name) {
-        Transaction tr = db.createTransaction();
+        Transaction tr = getTransaction();
         tr.clearRangeStartsWith(new KeyBuilder(this).add(Namespace.INDICES).add(name).build());   // todo also remove reverse-index entries
         tr.clearRangeStartsWith(new KeyBuilder(this).add(Namespace.INDEX_DATA).add(name).build());
-        tr.commit().get();
     }
 
     public Iterable<Index<? extends Element>> getIndices() {
         List<Index<? extends Element>> indices = new ArrayList<Index<? extends Element>>();
-        Transaction tr = db.createTransaction();
+        Transaction tr = getTransaction();
         List<KeyValue> kvs= tr.getRangeStartsWith(new KeyBuilder(this).add(Namespace.INDICES).build()).asList().get();
         for (KeyValue kv : kvs) {
             if (new String(kv.getValue()).equals("Vertex")) {
@@ -275,39 +270,65 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph {
         return indices;
     }
 
-    private <T extends Element> boolean hasIndex(String name, Class<T> type) {
-        Transaction tr = db.createTransaction();
-        byte[] bytes = tr.get(new KeyBuilder(this).add(Namespace.INDICES).add(name).build()).get();
-        return (bytes != null && new String(bytes).equals(type.getSimpleName()));
-    }
+
 
     public <T extends Element> void dropKeyIndex(String key, Class<T> elementClass) {
-        Transaction tr = db.createTransaction();
+        Transaction tr = getTransaction();
         tr.clear(new KeyBuilder(this).add(Namespace.KEY_INDEX).add(elementClass).add(key).build());
         tr.clearRangeStartsWith(KeyBuilder.keyIndexKeyDataPrefix(this, FoundationDBGraphUtils.getElementType(elementClass), key).build());
-        tr.commit().get();
-        keyIndexCache.removeIndexFromCache(key, elementClass);
     }
 
 
     public <T extends Element> void createKeyIndex(String key, Class<T> elementClass, final Parameter... indexParameters) {
         if (this.hasKeyIndex(key, FoundationDBGraphUtils.getElementType(elementClass))) throw new IllegalArgumentException();
-        Transaction tr = db.createTransaction();
+        Transaction tr = getTransaction();
         tr.set(new KeyBuilder(this).add(Namespace.KEY_INDEX).add(elementClass).add(key).build(), "".getBytes());
         autoIndexer.reindexElements(key, elementClass, tr);
-        keyIndexCache.addIndexToCache(key, elementClass);
-        tr.commit().get();
     }
 
     public final <T extends Element> Set<String> getIndexedKeys(Class<T> elementClass) {
-        return keyIndexCache.getIndexedKeys(elementClass);
+        Set<String> keyIndices = new TreeSet<String>();
+        if(elementClass.equals(Vertex.class) || elementClass.equals(Edge.class)) {
+            List<KeyValue> kvs = getTransaction().getRangeStartsWith(new KeyBuilder(this).add(Namespace.KEY_INDEX).add(elementClass).build()).asList().get();
+            for (KeyValue kv : kvs) {
+                keyIndices.add(Tuple.fromBytes(kv.getKey()).getString(4));
+            }
+            return keyIndices;
+        }
+        else throw new IllegalArgumentException();
     }
 
     public boolean hasKeyIndex(String key, ElementType type) {
-        return keyIndexCache.hasKeyIndex(key, type);
+        return getIndexedKeys(FoundationDBGraphUtils.getElementClass(type)).contains(key);
     }
 
     public AutoIndexer getAutoIndexer() {
         return this.autoIndexer;
+    }
+
+    public void stopTransaction(Conclusion conclusion) {
+
+    }
+
+    public void commit() {
+        this.tr.commit().get();
+        this.hasOpenTransaction = false;
+        this.tr = null;
+    }
+
+    public void rollback() {
+        this.tr.reset();
+        this.tr.dispose();
+        this.hasOpenTransaction = false;
+        this.tr = null;
+    }
+
+    public Transaction getTransaction() {
+        if (this.hasOpenTransaction) return this.tr;
+        else {
+            this.hasOpenTransaction = true;
+            this.tr = db.createTransaction();
+            return this.tr;
+        }
     }
 }

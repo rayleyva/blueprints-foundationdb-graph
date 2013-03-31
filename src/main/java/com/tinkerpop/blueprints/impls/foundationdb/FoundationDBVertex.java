@@ -72,7 +72,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 
     private ArrayList<Edge> getDirectionEdges(final Direction d, final String... labels) {
         ArrayList<Edge> edges = new ArrayList<Edge>();
-        Transaction tr = g.db.createTransaction();
+        Transaction tr = g.getTransaction();
         List<KeyValue> edgeKeys = tr.getRangeStartsWith(KeyBuilder.directionKeyPrefix(g, d, this).build()).asList().get();
         for (KeyValue kv : edgeKeys) {
             FoundationDBEdge e = new FoundationDBEdge(g, Tuple.fromBytes(kv.getKey()).getString(5));
@@ -98,7 +98,6 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
         g.removeVertex(this);
     }
 
-	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

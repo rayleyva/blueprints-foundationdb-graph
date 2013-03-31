@@ -33,16 +33,15 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
 
 
     public void put(String key, Object value, T element) {
-        Transaction tr = g.db.createTransaction();
+        Transaction tr = g.getTransaction();
         tr.set(getRawIndexKey(key, value).add(element).build(), "".getBytes());
         tr.set(getRawReverseIndexKey(element, key, value), "".getBytes());
-        tr.commit().get();
     }
 
 
     public CloseableIterable<T> get(String key, Object value) {
         ArrayList<T> items = new ArrayList<T>();
-        Transaction tr = g.db.createTransaction();
+        Transaction tr = g.getTransaction();
         List<KeyValue> existingValues = tr.getRangeStartsWith(getRawIndexKey(key, value).build()).asList().get();
         for (KeyValue kv : existingValues) {
             String name = Tuple.fromBytes(kv.getKey()).getString(6);
@@ -59,16 +58,15 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
 
 
     public long count(String key, Object value) {
-        Transaction tr = g.db.createTransaction();
+        Transaction tr = g.getTransaction();
         List<KeyValue> existingValues = tr.getRangeStartsWith(getRawIndexKey(key, value).build()).asList().get();
         return existingValues.size();
     }
 
 
     public void remove(String key, Object value, T element) {
-        Transaction tr = g.db.createTransaction();
+        Transaction tr = g.getTransaction();
         tr.clear(getRawIndexKey(key, value).add(element).build());
-        tr.commit().get();
     }
 
     private KeyBuilder getRawIndexKey(String key, Object value) {          // todo separate keyspaces!
@@ -77,5 +75,10 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
 
     private byte[] getRawReverseIndexKey(T e, String key, Object value) {
         return new KeyBuilder(g).add(Namespace.REVERSE_INDEX).add(indexClass).add(e).add(getIndexName()).add(key).addObject(value).build();
+    }
+
+    public <T extends Element> boolean exists(String name, Class<T> type, Transaction tr) {
+        byte[] bytes = tr.get(new KeyBuilder(g).add(Namespace.INDICES).add(name).build()).get();
+        return (bytes != null && new String(bytes).equals(type.getSimpleName()));
     }
 }

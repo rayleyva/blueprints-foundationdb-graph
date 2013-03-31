@@ -26,7 +26,7 @@ public abstract class FoundationDBElement implements Element {
 
 	@Override
 	public <T> T getProperty(String key) {
-		Transaction tr = g.db.createTransaction();
+		Transaction tr = g.getTransaction();
         byte[] bytes = tr.get(this.getRawKey(key)).get();
         if (bytes == null) return null;
         Tuple t = Tuple.fromBytes(bytes);
@@ -42,7 +42,7 @@ public abstract class FoundationDBElement implements Element {
 
 	@Override
 	public Set<String> getPropertyKeys() {
-        Transaction tr = g.db.createTransaction();
+        Transaction tr = g.getTransaction();
         List<KeyValue> l = tr.getRangeStartsWith(KeyBuilder.propertyKeyPrefix(g, this).build()).asList().get();
         Set<String> keySet = new TreeSet<String>();
         for (KeyValue kv : l) {
@@ -57,11 +57,10 @@ public abstract class FoundationDBElement implements Element {
 
 	@Override
 	public <T> T removeProperty(String key) {
-        Transaction tr = g.db.createTransaction();
+        Transaction tr = g.getTransaction();
 		T value = this.getProperty(key);
         tr.clearRangeStartsWith(this.getRawKey(key));
         g.getAutoIndexer().autoRemove(this, key, value, tr);
-        tr.commit().get();
         return value;
 	}
 
@@ -71,10 +70,9 @@ public abstract class FoundationDBElement implements Element {
         if (key.equals("") || key.toLowerCase().equals("id") || key.toLowerCase().equals("label") || key == null) throw new IllegalArgumentException();
         String valueType = FoundationDBGraphUtils.getValueTypeString(value);
         Object storeableValue = FoundationDBGraphUtils.getStoreableValue(value);
-        Transaction tr = g.db.createTransaction();
+        Transaction tr = g.getTransaction();
         tr.set(this.getRawKey(key), new Tuple().add(valueType).addObject(storeableValue).pack());
         g.getAutoIndexer().autoAdd(this, key, value, tr);
-        tr.commit().get();
     }
 
 	@Override

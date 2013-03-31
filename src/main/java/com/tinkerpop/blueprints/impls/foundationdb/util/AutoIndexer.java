@@ -23,16 +23,14 @@ public class AutoIndexer {
                     tr.set(buildKeyIndexKey(v, key, v.getProperty(key)), "".getBytes());        // todo transactional
                 }
             }
-            tr.commit().get();
         }
         else if (elementClass.equals(Edge.class)) {
             Iterable<Edge> edges = graph.getEdges();
             for (Edge e : edges) {
                 if (e.getPropertyKeys().contains(key)) {
-                    tr.set(buildKeyIndexKey(e, key, e.getProperty(key)), "".getBytes()); // todo transactional
+                    tr.set(buildKeyIndexKey(e, key, e.getProperty(key)), "".getBytes());
                 }
             }
-            tr.commit().get();
         }
         else throw new IllegalArgumentException();
     }
@@ -40,7 +38,7 @@ public class AutoIndexer {
     public void autoRemove(Element e, Transaction tr) {
         for (String key : e.getPropertyKeys()) {
             if (graph.hasKeyIndex(key, FoundationDBGraphUtils.getElementType(e))) {
-                tr.clear(buildKeyIndexKey(e, key, e.getProperty(key)));       // todo transactional
+                tr.clear(buildKeyIndexKey(e, key, e.getProperty(key)));
             }
         }
     }
