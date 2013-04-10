@@ -10,11 +10,6 @@ import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
 import com.tinkerpop.blueprints.impls.foundationdb.util.Namespace;
 
 public class FoundationDBVertex extends FoundationDBElement implements Vertex {
-    @Override
-    public Class <? extends Element> getAbstractClass() {
-        return Vertex.class;
-    }
-
 	public FoundationDBVertex(FoundationDBGraph g, String vID) {
         super(g);
 		this.id = vID;

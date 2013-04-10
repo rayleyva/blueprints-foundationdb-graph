@@ -106,8 +106,6 @@ public abstract class FoundationDBElement implements Element {
         throw new IllegalArgumentException();
     }
 
-    public abstract Class <? extends Element> getAbstractClass();
-
     private byte[] getRawKey(String key) {
         return KeyBuilder.propertyKeyPrefix(g, this).add(key).build();
     }

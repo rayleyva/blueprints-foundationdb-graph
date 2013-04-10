@@ -9,11 +9,6 @@ import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
 import com.tinkerpop.blueprints.impls.foundationdb.util.Namespace;
 
 public class FoundationDBEdge extends FoundationDBElement implements Edge {
-    @Override
-    public Class <? extends Element> getAbstractClass() {
-        return Edge.class;
-    }
-
     public FoundationDBEdge(FoundationDBGraph g) {
         super(g);
     }
