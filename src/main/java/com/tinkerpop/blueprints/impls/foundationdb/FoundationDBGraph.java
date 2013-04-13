@@ -10,6 +10,9 @@ import com.foundationdb.Transaction;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.impls.foundationdb.util.*;
 import com.tinkerpop.blueprints.util.PropertyFilteredIterable;
+import com.tinkerpop.blueprints.util.io.gml.GMLReader;
+import com.tinkerpop.blueprints.util.io.graphml.GraphMLReader;
+import com.tinkerpop.blueprints.util.io.graphson.GraphSONReader;
 
 public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, TransactionalGraph {
 	
@@ -66,6 +69,41 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         this.autoIndexer = new AutoIndexer(this);
         this.hasOpenTransaction = false;
 	}
+
+    public FoundationDBGraph(String graphName, String graphFile) {
+        this(graphName);
+        readGraphFile(graphFile);
+    }
+
+    private void readGraphFile(String graphFile) {
+        if (graphFile.endsWith(".gml")) {
+            GMLReader gmlReader = new GMLReader(this);
+            try {
+                gmlReader.inputGraph(graphFile);
+            }
+            catch(Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+        else if (graphFile.endsWith(".xml")) {
+            GraphMLReader graphMLReader = new GraphMLReader(this);
+            try {
+                graphMLReader.inputGraph(graphFile);
+            }
+            catch(Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+        else if (graphFile.endsWith(".json")) {
+            GraphSONReader graphSONReader = new GraphSONReader(this);
+            try {
+                graphSONReader.inputGraph(graphFile);
+            }
+            catch(Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
 	
 	public Features getFeatures() {
 		return FEATURES;

@@ -5,24 +5,25 @@ import com.tinkerpop.blueprints.impls.foundationdb.FoundationDBGraph;
 import com.tinkerpop.rexster.config.GraphConfiguration;
 import com.tinkerpop.rexster.config.GraphConfigurationException;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.HierarchicalConfiguration;
 
 // Minimalist rexster.xml for configuring FoundationDB graph
 //  <graph>
 //      <graph-name>kvexample</graph-name>
 //      <graph-type>com.tinkerpop.blueprints.impls.foundationdb.util.FoundationDBGraphConfiguration</graph-type>
+//      <saved-graph-file>demo-graph.xml</saved-graph-file>
 //  </graph>
 
 
 public class FoundationDBGraphConfiguration implements GraphConfiguration {
 
     public Graph configureGraphInstance(final Configuration config) throws GraphConfigurationException {
-        final HierarchicalConfiguration graphSectionConfig = (HierarchicalConfiguration) config;
-
         try {
             final String graphName = config.getString("graph-name");
-            return new FoundationDBGraph(graphName);
-
+            final String graphFile = config.getString("saved-graph-file", null);
+            if (graphFile == null)
+                return new FoundationDBGraph(graphName);
+            else
+                return new FoundationDBGraph(graphName, graphFile);
         }
         catch (Exception ex) {
             throw new GraphConfigurationException(ex);
