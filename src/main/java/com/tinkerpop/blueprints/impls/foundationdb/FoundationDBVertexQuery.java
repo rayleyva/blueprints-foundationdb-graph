@@ -16,11 +16,24 @@ import java.util.ArrayList;
  */
 public class FoundationDBVertexQuery implements VertexQuery {
 
+    private FoundationDBGraph g;
+    private FoundationDBVertex v;
+    private Direction d;
+    private String[] labels;
+
+    public FoundationDBVertexQuery(FoundationDBGraph g, FoundationDBVertex v) {
+        this.g = g;
+        this.v = v;
+        this.d = Direction.BOTH;
+    }
+
     public FoundationDBVertexQuery direction(Direction d) {
+        this.d = d;
         return this;
     }
 
-    public FoundationDBVertexQuery labels(String[] strings) {
+    public FoundationDBVertexQuery labels(String[] labels) {
+        this.labels = labels;
         return this;
     }
 
@@ -41,7 +54,7 @@ public class FoundationDBVertexQuery implements VertexQuery {
     }
 
     public long count() {
-        return 0;
+        return v.getEdges(d, labels).size();
     }
 
     public Object vertexIds() {
@@ -49,11 +62,11 @@ public class FoundationDBVertexQuery implements VertexQuery {
     }
 
     public Iterable<Vertex> vertices() {
-        return new ArrayList<Vertex>();
+        return v.getVertices(d, labels);
     }
 
     public Iterable<Edge> edges() {
-        return new ArrayList<Edge>();
+        return v.getEdges(d, labels);
     }
 
 }
