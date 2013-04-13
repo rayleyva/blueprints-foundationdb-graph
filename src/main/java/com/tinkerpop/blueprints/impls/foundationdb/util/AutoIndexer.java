@@ -15,12 +15,11 @@ public class AutoIndexer {
     }
 
     public void reindexElements(String key, Class<? extends Element> elementClass, Transaction tr) {
-        Iterable<Element> elements;
         if (elementClass.equals(Vertex.class)) {
             Iterable<Vertex> vertices = graph.getVertices();
             for (Vertex v : vertices) {
                 if (v.getPropertyKeys().contains(key)) {
-                    tr.set(buildKeyIndexKey(v, key, v.getProperty(key)), "".getBytes());        // todo transactional
+                    tr.set(buildKeyIndexKey(v, key, v.getProperty(key)), "".getBytes());
                 }
             }
         }
