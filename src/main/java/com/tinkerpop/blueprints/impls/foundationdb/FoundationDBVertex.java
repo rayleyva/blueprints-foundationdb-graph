@@ -71,7 +71,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
         List<KeyValue> edgeKeys = tr.getRangeStartsWith(KeyBuilder.directionKeyPrefix(g, d, this).build()).asList().get();
         for (KeyValue kv : edgeKeys) {
             FoundationDBEdge e = new FoundationDBEdge(g, Tuple.fromBytes(kv.getKey()).getString(5));
-            if (labels.length == 0) {
+            if (labels == null || labels.length == 0) {
                 edges.add(e);
             }
             else if (labels.length == 1) {
