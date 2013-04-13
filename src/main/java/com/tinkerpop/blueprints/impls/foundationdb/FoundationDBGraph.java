@@ -352,7 +352,8 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
     }
 
     public void stopTransaction(Conclusion conclusion) {
-
+        if (conclusion == Conclusion.SUCCESS) commit();
+        else if (conclusion == Conclusion.FAILURE) rollback();
     }
 
     public void commit() {
@@ -369,7 +370,9 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
     }
 
     public Transaction getTransaction() {
-        if (this.hasOpenTransaction) return this.tr;
+        if (this.hasOpenTransaction) {
+            return this.tr;
+        }
         else {
             this.hasOpenTransaction = true;
             this.tr = db.createTransaction();
