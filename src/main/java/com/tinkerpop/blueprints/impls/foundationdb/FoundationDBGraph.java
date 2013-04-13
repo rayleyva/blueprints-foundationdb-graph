@@ -72,7 +72,14 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 
     public FoundationDBGraph(String graphName, String graphFile) {
         this(graphName);
-        readGraphFile(graphFile);
+        if (getTransaction().get(new KeyBuilder(this).build()).get() == null ) {
+            System.out.println("Reading file: ".concat(graphFile));
+            readGraphFile(graphFile);
+            getTransaction().commit();
+        }
+        else {
+            System.out.println("File not loaded! Restoring persisted graph from disk.");
+        }
     }
 
     private void readGraphFile(String graphFile) {
