@@ -5,15 +5,6 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.VertexQuery;
 
-import java.util.ArrayList;
-
-/**
- * Created with IntelliJ IDEA.
- * User: will
- * Date: 4/13/13
- * Time: 2:05 PM
- * To change this template use File | Settings | File Templates.
- */
 public class FoundationDBVertexQuery implements VertexQuery {
 
     private FoundationDBGraph g;
