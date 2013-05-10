@@ -21,7 +21,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	public static final Features FEATURES = new Features();
     private AutoIndexer autoIndexer;
     private boolean hasOpenTransaction;
-    private Transaction tr;
+    private ThreadLocal<Transaction> tr;
 	
 	static {
         FEATURES.supportsDuplicateEdges = true;
@@ -358,7 +358,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 
     public void commit() {
         if (tr != null) {
-            this.tr.commit().get();
+            this.tr.get().commit().get();
             this.hasOpenTransaction = false;
             this.tr = null;
         }
@@ -366,8 +366,8 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 
     public void rollback() {
         if (tr != null) {
-            this.tr.reset();
-            this.tr.dispose();
+            this.tr.get().reset();
+            this.tr.get().dispose();
             this.hasOpenTransaction = false;
             this.tr = null;
         }
@@ -375,12 +375,16 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 
     public Transaction getTransaction() {
         if (this.hasOpenTransaction) {
-            return this.tr;
+            return this.tr.get();
         }
         else {
             this.hasOpenTransaction = true;
-            this.tr = db.createTransaction();
-            return this.tr;
+            this.tr = new ThreadLocal<Transaction>() {
+                protected Transaction initialValue() {
+                    return db.createTransaction();
+                }
+            };
+            return this.tr.get();
         }
     }
 }
