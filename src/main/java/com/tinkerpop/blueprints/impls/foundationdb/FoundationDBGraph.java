@@ -20,7 +20,6 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	public String graphName;
 	public static final Features FEATURES = new Features();
     private AutoIndexer autoIndexer;
-    private boolean hasOpenTransaction;
     private ThreadLocal<Transaction> tr;
 	
 	static {
@@ -67,7 +66,11 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         this.graphName = graphName;
 		this.db = fdb.open().get();
         this.autoIndexer = new AutoIndexer(this);
-        this.hasOpenTransaction = false;
+        this.tr = new ThreadLocal<Transaction>() {
+            protected Transaction initialValue() {
+                return db.createTransaction();
+            }
+        };
 	}
 
     public FoundationDBGraph(String graphName, String graphFile) {
@@ -271,7 +274,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	}
 
 	public void shutdown() {
-        if (this.hasOpenTransaction) commit();
+        commit();
 	}
 
     public void purge() {
@@ -357,34 +360,18 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
     }
 
     public void commit() {
-        if (tr != null) {
-            this.tr.get().commit().get();
-            this.hasOpenTransaction = false;
-            this.tr = null;
-        }
+        this.tr.get().commit().get();
+        this.tr.remove();
     }
 
     public void rollback() {
-        if (tr != null) {
-            this.tr.get().reset();
-            this.tr.get().dispose();
-            this.hasOpenTransaction = false;
-            this.tr = null;
-        }
+        this.tr.get().reset();
+        this.tr.get().dispose();
+        this.tr.remove();
     }
 
     public Transaction getTransaction() {
-        if (this.hasOpenTransaction) {
-            return this.tr.get();
-        }
-        else {
-            this.hasOpenTransaction = true;
-            this.tr = new ThreadLocal<Transaction>() {
-                protected Transaction initialValue() {
-                    return db.createTransaction();
-                }
-            };
-            return this.tr.get();
-        }
+        return this.tr.get();
     }
+
 }
