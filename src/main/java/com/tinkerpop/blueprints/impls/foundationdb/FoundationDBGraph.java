@@ -357,16 +357,20 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
     }
 
     public void commit() {
-        this.tr.commit().get();
-        this.hasOpenTransaction = false;
-        this.tr = null;
+        if (tr != null) {
+            this.tr.commit().get();
+            this.hasOpenTransaction = false;
+            this.tr = null;
+        }
     }
 
     public void rollback() {
-        this.tr.reset();
-        this.tr.dispose();
-        this.hasOpenTransaction = false;
-        this.tr = null;
+        if (tr != null) {
+            this.tr.reset();
+            this.tr.dispose();
+            this.hasOpenTransaction = false;
+            this.tr = null;
+        }
     }
 
     public Transaction getTransaction() {
