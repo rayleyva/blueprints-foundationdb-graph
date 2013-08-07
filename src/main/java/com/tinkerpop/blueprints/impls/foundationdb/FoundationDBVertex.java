@@ -80,7 +80,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 
 	@Override
 	public VertexQuery query() {
-		return new FoundationDBVertexQuery(g, this);
+		return new FoundationDBVertexQuery(this);
 	}
 
     private ArrayList<Edge> getDirectionEdges(final Direction d, final String... labels) {
