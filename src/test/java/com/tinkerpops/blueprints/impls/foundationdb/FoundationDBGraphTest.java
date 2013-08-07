@@ -71,10 +71,16 @@ public class FoundationDBGraphTest extends GraphTest {
         printTestPerformance("TransactionalGraphTestSuite", this.stopWatch());
     }
 
-    public void testQueryTestSuite() throws Exception {
+    public void testVertexQueryTestSuite() throws Exception {
         this.stopWatch();
-        doTestSuite(new QueryTestSuite(this));
-        printTestPerformance("QueryTestSuite", this.stopWatch());
+        doTestSuite(new VertexQueryTestSuite(this));
+        printTestPerformance("VertexQueryTestSuite", this.stopWatch());
+    }
+
+    public void testGraphQueryTestSuite() throws Exception {
+        this.stopWatch();
+        doTestSuite(new GraphQueryTestSuite(this));
+        printTestPerformance("GraphQueryTestSuite", this.stopWatch());
     }
 
     @Override

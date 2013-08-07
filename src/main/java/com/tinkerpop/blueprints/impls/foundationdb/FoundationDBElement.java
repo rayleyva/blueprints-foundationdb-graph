@@ -73,6 +73,8 @@ public abstract class FoundationDBElement implements Element {
         String valueType = FoundationDBGraphUtils.getValueTypeString(value);
         Object storeableValue = FoundationDBGraphUtils.getStoreableValue(value);
         Transaction tr = g.getTransaction();
+        Object old = getProperty(key);
+        if (old != null) g.getAutoIndexer().autoRemove(this, key, old, tr);
         tr.set(this.getRawKey(key), new Tuple().add(valueType).addObject(storeableValue).pack());
         g.getAutoIndexer().autoAdd(this, key, value, tr);
     }

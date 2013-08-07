@@ -48,7 +48,6 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         FEATURES.supportsStringProperty = true;
 
         FEATURES.isWrapper = false;
-        FEATURES.isRDFModel = false;
         FEATURES.supportsKeyIndices = true;
         FEATURES.supportsVertexKeyIndex = true;
         FEATURES.supportsEdgeKeyIndex = true;
@@ -119,6 +118,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 
 	@Override
 	public Edge addEdge(Object id, Vertex outVertex, Vertex inVertex, String label) {
+        if (label == null) throw new IllegalArgumentException("Edge must not have null label.");
 		FoundationDBEdge e;
         if (id != null) e = new FoundationDBEdge(this, id.toString());
         else e = new FoundationDBEdge(this);
@@ -272,7 +272,12 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	}
 
 	public void shutdown() {
-        commit();
+        try {
+            commit();
+        }
+        catch (Exception ex) {
+            // eat
+        }
 	}
 
     public void purge() {
