@@ -71,6 +71,13 @@ public class FoundationDBGraphTest extends GraphTest {
         printTestPerformance("TransactionalGraphTestSuite", this.stopWatch());
     }
 
+    public void testQueryTestSuite() throws Exception {
+        this.stopWatch();
+        doTestSuite(new QueryTestSuite(this));
+        printTestPerformance("QueryTestSuite", this.stopWatch());
+    }
+
+
     @Override
     public Graph generateGraph() {
         FoundationDBGraph g = new FoundationDBGraph("graphTest");
