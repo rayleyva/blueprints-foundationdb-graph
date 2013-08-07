@@ -2,11 +2,9 @@ package com.tinkerpop.blueprints.impls.foundationdb;
 
 import java.util.*;
 
-import com.foundationdb.KeyValue;
+import com.foundationdb.*;
+import com.foundationdb.async.AsyncIterable;
 import com.tinkerpop.blueprints.*;
-import com.foundationdb.Database;
-import com.foundationdb.FDB;
-import com.foundationdb.Transaction;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.impls.foundationdb.util.*;
 import com.tinkerpop.blueprints.util.PropertyFilteredIterable;
@@ -62,9 +60,9 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	}
 	
 	public FoundationDBGraph(String graphName) {
-        FDB fdb = FDB.selectAPIVersion(21);
+        FDB fdb = FDB.selectAPIVersion(23);
         this.graphName = graphName;
-		this.db = fdb.open().get();
+		this.db = fdb.open();
         this.autoIndexer = new AutoIndexer(this);
         this.tr = new ThreadLocal<Transaction>() {
             protected Transaction initialValue() {
@@ -155,7 +153,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	public Iterable<Edge> getEdges() {
         List<Edge> edges = new ArrayList<Edge>();
         Transaction tr = getTransaction();
-        List<KeyValue> keyValueList = tr.getRangeStartsWith(new KeyBuilder(this).add(Namespace.EDGE).build()).asList().get();
+        AsyncIterable<KeyValue> keyValueList = tr.getRange(Range.startsWith(new KeyBuilder(this).add(Namespace.EDGE).build()));
         for (KeyValue kv: keyValueList) {
             edges.add(new FoundationDBEdge(this, Tuple.fromBytes(kv.getKey()).getString(3)));
         }
@@ -165,7 +163,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	public Iterable<Edge> getEdges(String key, Object value) {
         if (this.hasKeyIndex(key, ElementType.EDGE)) {
             Transaction tr = getTransaction();
-            List<KeyValue> kvs = tr.getRangeStartsWith(KeyBuilder.keyIndexKeyDataPrefix(this, ElementType.EDGE, key).addObject(value).build()).asList().get();
+            AsyncIterable<KeyValue> kvs = tr.getRange(Range.startsWith(KeyBuilder.keyIndexKeyDataPrefix(this, ElementType.EDGE, key).addObject(value).build()));
             ArrayList<Edge> edges = new ArrayList<Edge>();
             for (KeyValue kv : kvs) {
                 edges.add(new FoundationDBEdge(this, Tuple.fromBytes(kv.getKey()).getString(6)));
@@ -199,7 +197,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	public Iterable<Vertex> getVertices() {
         List<Vertex> vertices = new ArrayList<Vertex>();
         Transaction tr = getTransaction();
-        List<KeyValue> keyValueList = tr.getRangeStartsWith(new KeyBuilder(this).add(Namespace.VERTEX).build()).asList().get();
+        AsyncIterable<KeyValue> keyValueList = tr.getRange(Range.startsWith(new KeyBuilder(this).add(Namespace.VERTEX).build()));
         for (KeyValue kv: keyValueList) {
             vertices.add(new FoundationDBVertex(this, new String(kv.getValue())));
         }
@@ -210,7 +208,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	public Iterable<Vertex> getVertices(String key, Object value) {
         if (this.hasKeyIndex(key, ElementType.VERTEX)) {
             Transaction tr = getTransaction();
-            List<KeyValue> kvs = tr.getRangeStartsWith(KeyBuilder.keyIndexKeyDataPrefix(this, ElementType.VERTEX, key).addObject(value).build()).asList().get();
+            AsyncIterable<KeyValue> kvs = tr.getRange(Range.startsWith(KeyBuilder.keyIndexKeyDataPrefix(this, ElementType.VERTEX, key).addObject(value).build()));
             ArrayList<Vertex> vertices = new ArrayList<Vertex>();
             for (KeyValue kv : kvs) {
                 vertices.add(new FoundationDBVertex(this, Tuple.fromBytes(kv.getKey()).getString(6)));
@@ -239,7 +237,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         autoIndexer.autoRemove(e, tr);
         tr.clearRangeStartsWith(KeyBuilder.propertyKeyPrefix(this, e).build());
         byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.EDGE).add(e).build();
-        List<KeyValue> reverseIndexValues = tr.getRangeStartsWith(reverseIndexKey).asList().get();
+        AsyncIterable<KeyValue> reverseIndexValues = tr.getRange(Range.startsWith(reverseIndexKey));
         for (KeyValue kv : reverseIndexValues) {
             FoundationDBIndex<Edge> index = new FoundationDBIndex<Edge>(Tuple.fromBytes(kv.getKey()).getString(5), Edge.class, this);
             index.remove(Tuple.fromBytes(kv.getKey()).getString(6), Tuple.fromBytes(kv.getKey()).get(7), e);
@@ -260,7 +258,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         autoIndexer.autoRemove(v, tr);
         tr.clearRangeStartsWith(KeyBuilder.propertyKeyPrefix(this, v).build());
         byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.VERTEX).add(v).build();
-        List<KeyValue> reverseIndexValues = tr.getRangeStartsWith(reverseIndexKey).asList().get();
+        AsyncIterable<KeyValue> reverseIndexValues = tr.getRange(Range.startsWith(reverseIndexKey));
         for (KeyValue kv : reverseIndexValues) {
             FoundationDBIndex<Vertex> index = new FoundationDBIndex<Vertex>(Tuple.fromBytes(kv.getKey()).getString(5), Vertex.class, this);
             index.remove(Tuple.fromBytes(kv.getKey()).getString(6), Tuple.fromBytes(kv.getKey()).get(7), v);
@@ -306,7 +304,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
     public Iterable<Index<? extends Element>> getIndices() {
         List<Index<? extends Element>> indices = new ArrayList<Index<? extends Element>>();
         Transaction tr = getTransaction();
-        List<KeyValue> kvs= tr.getRangeStartsWith(new KeyBuilder(this).add(Namespace.INDICES).build()).asList().get();
+        AsyncIterable<KeyValue> kvs= tr.getRange(Range.startsWith(new KeyBuilder(this).add(Namespace.INDICES).build()));
         for (KeyValue kv : kvs) {
             if (new String(kv.getValue()).equals("Vertex")) {
                 indices.add(new FoundationDBIndex<Vertex>(Tuple.fromBytes(kv.getKey()).getString(3), Vertex.class, this));
@@ -337,7 +335,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
     public final <T extends Element> Set<String> getIndexedKeys(Class<T> elementClass) {
         Set<String> keyIndices = new TreeSet<String>();
         if(elementClass.equals(Vertex.class) || elementClass.equals(Edge.class)) {
-            List<KeyValue> kvs = getTransaction().getRangeStartsWith(new KeyBuilder(this).add(Namespace.KEY_INDEX).add(elementClass).build()).asList().get();
+            AsyncIterable<KeyValue> kvs = getTransaction().getRange(Range.startsWith(new KeyBuilder(this).add(Namespace.KEY_INDEX).add(elementClass).build()));
             for (KeyValue kv : kvs) {
                 keyIndices.add(Tuple.fromBytes(kv.getKey()).getString(4));
             }

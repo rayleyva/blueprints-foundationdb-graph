@@ -1,7 +1,9 @@
 package com.tinkerpop.blueprints.impls.foundationdb;
 
 import com.foundationdb.KeyValue;
+import com.foundationdb.Range;
 import com.foundationdb.Transaction;
+import com.foundationdb.async.AsyncIterable;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
@@ -42,7 +44,7 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
     public CloseableIterable<T> get(String key, Object value) {
         ArrayList<T> items = new ArrayList<T>();
         Transaction tr = g.getTransaction();
-        List<KeyValue> existingValues = tr.getRangeStartsWith(getRawIndexKey(key, value).build()).asList().get();
+        AsyncIterable<KeyValue> existingValues = tr.getRange(Range.startsWith(getRawIndexKey(key, value).build()));
         for (KeyValue kv : existingValues) {
             String name = Tuple.fromBytes(kv.getKey()).getString(6);
             if (this.getIndexClass().equals(Vertex.class)) items.add((T) new FoundationDBVertex(g, name));
@@ -59,7 +61,7 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
 
     public long count(String key, Object value) {
         Transaction tr = g.getTransaction();
-        List<KeyValue> existingValues = tr.getRangeStartsWith(getRawIndexKey(key, value).build()).asList().get();
+        List<KeyValue> existingValues = tr.getRange(Range.startsWith(getRawIndexKey(key, value).build())).asList().get();
         return existingValues.size();
     }
 

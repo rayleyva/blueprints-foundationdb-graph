@@ -3,7 +3,9 @@ package com.tinkerpop.blueprints.impls.foundationdb;
 import java.util.*;
 
 import com.foundationdb.KeyValue;
+import com.foundationdb.Range;
 import com.foundationdb.Transaction;
+import com.foundationdb.async.AsyncIterable;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.impls.foundationdb.util.FoundationDBGraphUtils;
@@ -43,9 +45,9 @@ public abstract class FoundationDBElement implements Element {
 	@Override
 	public Set<String> getPropertyKeys() {
         Transaction tr = g.getTransaction();
-        List<KeyValue> l = tr.getRangeStartsWith(KeyBuilder.propertyKeyPrefix(g, this).build()).asList().get();
+        AsyncIterable<KeyValue> kvs = tr.getRange(Range.startsWith(KeyBuilder.propertyKeyPrefix(g, this).build()));
         Set<String> keySet = new TreeSet<String>();
-        for (KeyValue kv : l) {
+        for (KeyValue kv : kvs) {
             keySet.add(Tuple.fromBytes(kv.getKey()).getString(5));
         }
         return keySet;

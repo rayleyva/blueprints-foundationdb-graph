@@ -3,6 +3,8 @@ package com.tinkerpop.blueprints.impls.foundationdb;
 import java.util.*;
 
 import com.foundationdb.KeyValue;
+import com.foundationdb.Range;
+import com.foundationdb.async.AsyncIterable;
 import com.tinkerpop.blueprints.*;
 import com.foundationdb.tuple.Tuple;
 import com.foundationdb.Transaction;
@@ -68,7 +70,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
     private ArrayList<Edge> getDirectionEdges(final Direction d, final String... labels) {
         ArrayList<Edge> edges = new ArrayList<Edge>();
         Transaction tr = g.getTransaction();
-        List<KeyValue> edgeKeys = tr.getRangeStartsWith(KeyBuilder.directionKeyPrefix(g, d, this).build()).asList().get();
+        AsyncIterable<KeyValue> edgeKeys = tr.getRange(Range.startsWith(KeyBuilder.directionKeyPrefix(g, d, this).build()));
         for (KeyValue kv : edgeKeys) {
             FoundationDBEdge e = new FoundationDBEdge(g, Tuple.fromBytes(kv.getKey()).getString(5));
             if (labels == null || labels.length == 0) {
