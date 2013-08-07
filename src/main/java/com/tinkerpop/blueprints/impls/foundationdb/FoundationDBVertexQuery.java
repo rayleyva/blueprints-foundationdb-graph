@@ -11,6 +11,7 @@ public class FoundationDBVertexQuery implements VertexQuery {
     private FoundationDBVertex v;
     private Direction d;
     private String[] labels;
+    private long limit = 0;
 
     public FoundationDBVertexQuery(FoundationDBGraph g, FoundationDBVertex v) {
         this.g = g;
@@ -41,6 +42,7 @@ public class FoundationDBVertexQuery implements VertexQuery {
     }
 
     public FoundationDBVertexQuery limit(long l) {
+        this.limit = l;
         return this;
     }
 
@@ -53,11 +55,11 @@ public class FoundationDBVertexQuery implements VertexQuery {
     }
 
     public Iterable<Vertex> vertices() {
-        return v.getVertices(d, labels);
+        return v.getVertices(d, (int)limit, labels);
     }
 
     public Iterable<Edge> edges() {
-        return v.getEdges(d, labels);
+        return v.getEdges(d, (int)limit, labels);
     }
 
 }

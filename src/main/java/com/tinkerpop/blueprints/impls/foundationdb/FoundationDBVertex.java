@@ -26,21 +26,34 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	    return g.addEdge(null, this, inVertex, label);
 	}
 
-	@Override
-	public Collection<Edge> getEdges(Direction d, String... labels) {
-		if (d.equals(Direction.IN)) return getDirectionEdges(d, labels);
-        else if (d.equals(Direction.OUT)) return getDirectionEdges(d, labels);
+    @Override
+    public Collection<Edge> getEdges(Direction d, String... labels) {
+        return getEdges(d, 0, labels);
+    }
+
+	public Collection<Edge> getEdges(Direction d, int limit, String... labels) {
+		List<Edge> result;
+        if (d.equals(Direction.IN)) result = getDirectionEdges(d, labels);
+        else if (d.equals(Direction.OUT)) result = getDirectionEdges(d, labels);
         else  {
             ArrayList<Edge> inEdges = getDirectionEdges(Direction.IN, labels);
             ArrayList<Edge> outEdges = getDirectionEdges(Direction.OUT, labels);
             inEdges.addAll(outEdges);
-            return inEdges;
+            result = inEdges;
         }
+
+        if (limit != 0) result = result.subList(0, limit);
+
+        return result;
 	}
 
 	@Override
-	public Collection<Vertex> getVertices(Direction d, String... labels) {
-		Collection<Vertex> vertices;
+    public Collection<Vertex> getVertices(Direction d, String... labels) {
+        return getVertices(d, 0, labels);
+    }
+
+	public Collection<Vertex> getVertices(Direction d, int limit, String... labels) {
+		List<Vertex> vertices;
         if (d.equals(Direction.IN) || d.equals(Direction.OUT)) {
             ArrayList<Edge> edges = getDirectionEdges(d, labels);
             vertices = new ArrayList<Vertex>();
@@ -59,6 +72,9 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
                 vertices.add(e.getVertex(Direction.IN));
             }
         }
+
+        if (limit != 0) vertices = vertices.subList(0, limit);
+
         return vertices;
 	}
 
