@@ -222,7 +222,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 
 	@Override
 	public GraphQuery query() {
-		return null;
+		return new FoundationDBGraphQuery(this);
 	}
 
 	@Override
