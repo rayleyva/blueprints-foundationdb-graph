@@ -11,6 +11,7 @@ import com.tinkerpop.blueprints.util.PropertyFilteredIterable;
 import com.tinkerpop.blueprints.util.io.gml.GMLReader;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReader;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONReader;
+import org.apache.commons.configuration.Configuration;
 
 public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, TransactionalGraph {
 	
@@ -69,6 +70,10 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
             }
         };
 	}
+
+    public FoundationDBGraph(Configuration config) {
+        this(config.getString("blueprints.foundationdb.name", UUID.randomUUID().toString()));
+    }
 
     public FoundationDBGraph(String graphName, String graphFile) {
         this(graphName);
