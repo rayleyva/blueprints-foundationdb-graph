@@ -65,7 +65,7 @@ public abstract class FoundationDBElement implements Element {
 	public <T> T removeProperty(String key) {
         Transaction tr = g.getTransaction();
 		T value = this.getProperty(key);
-        tr.clearRangeStartsWith(this.getRawKey(key));
+        tr.clear(Range.startsWith(this.getRawKey(key)));
         if(value != null) {
             g.getAutoIndexer().autoRemove(this, key, value, tr);
         }
