@@ -4,6 +4,7 @@ import java.util.*;
 
 import com.foundationdb.*;
 import com.foundationdb.async.AsyncIterable;
+import com.foundationdb.async.Function;
 import com.tinkerpop.blueprints.*;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.impls.foundationdb.util.*;
@@ -156,15 +157,19 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 
 	@Override
 	public Iterable<Edge> getEdges() {
-        List<Edge> edges = new ArrayList<Edge>();
         Transaction tr = getTransaction();
-        AsyncIterable<KeyValue> keyValueList = tr.getRange(Range.startsWith(new KeyBuilder(this).add(Namespace.EDGE).build()));
-        for (KeyValue kv: keyValueList) {
-            edges.add(new FoundationDBEdge(this, Tuple.fromBytes(kv.getKey()).getString(3)));
-        }
-        return edges;
+        AsyncIterable<KeyValue> keyValueIt = tr.getRange(Range.startsWith(new KeyBuilder(this).add(Namespace.EDGE).build()));
+        return AsyncUtils.mapIterable(keyValueIt,
+            new Function<KeyValue, Edge>() {
+                @Override
+                public Edge apply(KeyValue kv) {
+                    return new FoundationDBEdge(FoundationDBGraph.this, Tuple.fromBytes(kv.getKey()).getString(3));
+                }
+            }
+        );
 	}
 
+    @Override
 	public Iterable<Edge> getEdges(String key, Object value) {
         if (this.hasKeyIndex(key, ElementType.EDGE)) {
             Transaction tr = getTransaction();
@@ -200,13 +205,16 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 
 	@Override
 	public Iterable<Vertex> getVertices() {
-        List<Vertex> vertices = new ArrayList<Vertex>();
         Transaction tr = getTransaction();
-        AsyncIterable<KeyValue> keyValueList = tr.getRange(Range.startsWith(new KeyBuilder(this).add(Namespace.VERTEX).build()));
-        for (KeyValue kv: keyValueList) {
-            vertices.add(new FoundationDBVertex(this, new String(kv.getValue())));
-        }
-        return vertices;
+        AsyncIterable<KeyValue> keyValueIt = tr.getRange(Range.startsWith(new KeyBuilder(this).add(Namespace.VERTEX).build()));
+        return AsyncUtils.mapIterable(keyValueIt,
+            new Function<KeyValue, Vertex>() {
+                @Override
+                public Vertex apply(KeyValue kv) {
+                    return new FoundationDBVertex(FoundationDBGraph.this, new String(kv.getValue()));
+                }
+            }
+        );
 	}
 
 	@Override
