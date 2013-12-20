@@ -234,6 +234,8 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	public void removeEdge(Edge e) {
         if (!hasEdge(e)) throw new IllegalArgumentException("Edge does not exist!");
         Transaction tr = getTransaction();
+        byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.EDGE).add(e).build();
+        AsyncIterable<KeyValue> reverseIndexValues = tr.getRange(Range.startsWith(reverseIndexKey));
         tr.clear(KeyBuilder.directionKeyPrefix(this, Direction.IN, e.getVertex(Direction.IN)).add(e).build());
         tr.clear(KeyBuilder.directionKeyPrefix(this, Direction.OUT, e.getVertex(Direction.OUT)).add(e).build());
         tr.clear(Range.startsWith(new KeyBuilder(this).add(Namespace.EDGE).add(e).build()));
@@ -241,8 +243,6 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         tr.clear(Range.startsWith(KeyBuilder.directionKeyPrefix(this, Direction.OUT, e).build()));
         autoIndexer.autoRemove(e, tr);
         tr.clear(Range.startsWith(KeyBuilder.propertyKeyPrefix(this, e).build()));
-        byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.EDGE).add(e).build();
-        AsyncIterable<KeyValue> reverseIndexValues = tr.getRange(Range.startsWith(reverseIndexKey));
         for (KeyValue kv : reverseIndexValues) {
             FoundationDBIndex<Edge> index = new FoundationDBIndex<Edge>(Tuple.fromBytes(kv.getKey()).getString(5), Edge.class, this);
             index.remove(Tuple.fromBytes(kv.getKey()).getString(6), Tuple.fromBytes(kv.getKey()).get(7), e);
@@ -253,17 +253,17 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	@Override
 	public void removeVertex(Vertex v) {
         if (!hasVertex(v)) throw new IllegalArgumentException("Vertex does not exist!");
+        Transaction tr = getTransaction();
+        byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.VERTEX).add(v).build();
+        AsyncIterable<KeyValue> reverseIndexValues = tr.getRange(Range.startsWith(reverseIndexKey));
 		for (Edge e : v.getEdges(Direction.BOTH)) {
             if (hasEdge(e)) this.removeEdge(e);
         }
-        Transaction tr = getTransaction();
         tr.clear(Range.startsWith(new KeyBuilder(this).add(Namespace.VERTEX).add(v).build()));
         tr.clear(Range.startsWith(KeyBuilder.directionKeyPrefix(this, Direction.IN, v).build()));
         tr.clear(Range.startsWith(KeyBuilder.directionKeyPrefix(this, Direction.OUT, v).build()));
         autoIndexer.autoRemove(v, tr);
         tr.clear(Range.startsWith(KeyBuilder.propertyKeyPrefix(this, v).build()));
-        byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.VERTEX).add(v).build();
-        AsyncIterable<KeyValue> reverseIndexValues = tr.getRange(Range.startsWith(reverseIndexKey));
         for (KeyValue kv : reverseIndexValues) {
             FoundationDBIndex<Vertex> index = new FoundationDBIndex<Vertex>(Tuple.fromBytes(kv.getKey()).getString(5), Vertex.class, this);
             index.remove(Tuple.fromBytes(kv.getKey()).getString(6), Tuple.fromBytes(kv.getKey()).get(7), v);
