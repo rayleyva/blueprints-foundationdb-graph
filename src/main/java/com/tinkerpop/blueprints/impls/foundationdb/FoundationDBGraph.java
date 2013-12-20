@@ -234,6 +234,10 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	public void removeEdge(Edge e) {
         if (!hasEdge(e)) throw new IllegalArgumentException("Edge does not exist!");
 
+        _removeEdge(e);
+	}
+
+    private void _removeEdge(Edge e) {
         Transaction tr = getTransaction();
 
         byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.EDGE).add(e).build();
@@ -256,7 +260,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
             index.remove(Tuple.fromBytes(kv.getKey()).getString(6), Tuple.fromBytes(kv.getKey()).get(7), e);
         }
         tr.clear(Range.startsWith(reverseIndexKey));
-	}
+    }
 
 	@Override
 	public void removeVertex(Vertex v) {
@@ -269,7 +273,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         AsyncIterable<KeyValue> propertyKvs = tr.getRange(Range.startsWith(KeyBuilder.propertyKeyPrefix(this, v).build()));
 
         for (Edge e : v.getEdges(Direction.BOTH)) {
-            if (hasEdge(e)) this.removeEdge(e);
+            if(hasEdge(e)) _removeEdge(e);
         }
 
         tr.clear(Range.startsWith(new KeyBuilder(this).add(Namespace.VERTEX).add(v).build()));
