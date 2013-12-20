@@ -34,18 +34,8 @@ public class AutoIndexer {
         else throw new IllegalArgumentException();
     }
 
-    public void autoRemove(Element e, Transaction tr) {
-        for (String key : e.getPropertyKeys()) {
-            if (graph.hasKeyIndex(key, FoundationDBGraphUtils.getElementType(e))) {
-                tr.clear(buildKeyIndexKey(e, key, e.getProperty(key)));
-            }
-        }
-    }
-
     public void autoRemove(Element e, String key, Object value, Transaction tr) {
-        if (graph.hasKeyIndex(key, FoundationDBGraphUtils.getElementType(e))) {
-            tr.clear(buildKeyIndexKey(e, key, value));
-        }
+        tr.clear(buildKeyIndexKey(e, key, value));
     }
 
     public void autoAdd(Element e, String key, Object value, Transaction tr) {

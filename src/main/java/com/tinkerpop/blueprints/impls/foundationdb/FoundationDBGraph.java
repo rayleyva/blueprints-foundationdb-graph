@@ -233,16 +233,25 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	@Override
 	public void removeEdge(Edge e) {
         if (!hasEdge(e)) throw new IllegalArgumentException("Edge does not exist!");
+
         Transaction tr = getTransaction();
         byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.EDGE).add(e).build();
         AsyncIterable<KeyValue> reverseIndexValues = tr.getRange(Range.startsWith(reverseIndexKey));
+
+        AsyncIterable<KeyValue> propertyKvs = tr.getRange(Range.startsWith(KeyBuilder.propertyKeyPrefix(this, e).build()));
+
         tr.clear(KeyBuilder.directionKeyPrefix(this, Direction.IN, e.getVertex(Direction.IN)).add(e).build());
         tr.clear(KeyBuilder.directionKeyPrefix(this, Direction.OUT, e.getVertex(Direction.OUT)).add(e).build());
         tr.clear(Range.startsWith(new KeyBuilder(this).add(Namespace.EDGE).add(e).build()));
         tr.clear(Range.startsWith(KeyBuilder.directionKeyPrefix(this, Direction.IN, e).build()));
         tr.clear(Range.startsWith(KeyBuilder.directionKeyPrefix(this, Direction.OUT, e).build()));
-        autoIndexer.autoRemove(e, tr);
+
+        for(KeyValue kv : propertyKvs) {
+            autoIndexer.autoRemove(e, Tuple.fromBytes(kv.getKey()).getString(5), FoundationDBElement.getPropertyFromTuple(Tuple.fromBytes(kv.getValue())), tr);
+        }
+
         tr.clear(Range.startsWith(KeyBuilder.propertyKeyPrefix(this, e).build()));
+
         for (KeyValue kv : reverseIndexValues) {
             FoundationDBIndex<Edge> index = new FoundationDBIndex<Edge>(Tuple.fromBytes(kv.getKey()).getString(5), Edge.class, this);
             index.remove(Tuple.fromBytes(kv.getKey()).getString(6), Tuple.fromBytes(kv.getKey()).get(7), e);
@@ -253,17 +262,27 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	@Override
 	public void removeVertex(Vertex v) {
         if (!hasVertex(v)) throw new IllegalArgumentException("Vertex does not exist!");
+
         Transaction tr = getTransaction();
         byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.VERTEX).add(v).build();
         AsyncIterable<KeyValue> reverseIndexValues = tr.getRange(Range.startsWith(reverseIndexKey));
-		for (Edge e : v.getEdges(Direction.BOTH)) {
+
+        AsyncIterable<KeyValue> propertyKvs = tr.getRange(Range.startsWith(KeyBuilder.propertyKeyPrefix(this, v).build()));
+
+        for (Edge e : v.getEdges(Direction.BOTH)) {
             if (hasEdge(e)) this.removeEdge(e);
         }
+
         tr.clear(Range.startsWith(new KeyBuilder(this).add(Namespace.VERTEX).add(v).build()));
         tr.clear(Range.startsWith(KeyBuilder.directionKeyPrefix(this, Direction.IN, v).build()));
         tr.clear(Range.startsWith(KeyBuilder.directionKeyPrefix(this, Direction.OUT, v).build()));
-        autoIndexer.autoRemove(v, tr);
+
+        for(KeyValue kv : propertyKvs) {
+            autoIndexer.autoRemove(v, Tuple.fromBytes(kv.getKey()).getString(5), FoundationDBElement.getPropertyFromTuple(Tuple.fromBytes(kv.getValue())), tr);
+        }
+
         tr.clear(Range.startsWith(KeyBuilder.propertyKeyPrefix(this, v).build()));
+
         for (KeyValue kv : reverseIndexValues) {
             FoundationDBIndex<Vertex> index = new FoundationDBIndex<Vertex>(Tuple.fromBytes(kv.getKey()).getString(5), Vertex.class, this);
             index.remove(Tuple.fromBytes(kv.getKey()).getString(6), Tuple.fromBytes(kv.getKey()).get(7), v);
@@ -355,7 +374,13 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
     }
 
     public boolean hasKeyIndex(String key, ElementType type) {
-        return getIndexedKeys(FoundationDBGraphUtils.getElementClass(type)).contains(key);
+        AsyncIterable<KeyValue> kvs = getTransaction().getRange(Range.startsWith(new KeyBuilder(this).add(Namespace.KEY_INDEX).add(type).build()));
+        for (KeyValue kv : kvs) {
+            if(key.equals(Tuple.fromBytes(kv.getKey()).getString(4))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public AutoIndexer getAutoIndexer() {

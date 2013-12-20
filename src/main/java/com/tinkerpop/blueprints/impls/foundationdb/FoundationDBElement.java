@@ -32,6 +32,10 @@ public abstract class FoundationDBElement implements Element {
         byte[] bytes = tr.get(this.getRawKey(key)).get();
         if (bytes == null) return null;
         Tuple t = Tuple.fromBytes(bytes);
+        return getPropertyFromTuple(t);
+	}
+
+    public static <T> T getPropertyFromTuple(Tuple t) {
         String valueType = t.getString(0);
         if (valueType.equals("string")) return (T) t.getString(1);
         else if (valueType.equals("integer")) return (T) new Integer((new Long(t.getLong(1))).intValue());
@@ -40,7 +44,7 @@ public abstract class FoundationDBElement implements Element {
         else if (valueType.equals("float")) return (T) new Float(Float.parseFloat(t.getString(1)));
         else if (valueType.equals("double")) return (T) new Double(Double.parseDouble(t.getString(1)));
         else throw new IllegalStateException();
-	}
+    }
 
 	@Override
 	public Set<String> getPropertyKeys() {
@@ -62,7 +66,9 @@ public abstract class FoundationDBElement implements Element {
         Transaction tr = g.getTransaction();
 		T value = this.getProperty(key);
         tr.clearRangeStartsWith(this.getRawKey(key));
-        g.getAutoIndexer().autoRemove(this, key, value, tr);
+        if(value != null) {
+            g.getAutoIndexer().autoRemove(this, key, value, tr);
+        }
         return value;
 	}
 
@@ -104,7 +110,7 @@ public abstract class FoundationDBElement implements Element {
 		return true;
 	}
 
-    private Boolean getBool(long l){
+    private static Boolean getBool(long l){
         if (l == 0) return Boolean.FALSE;
         if (l == 1) return Boolean.TRUE;
         throw new IllegalArgumentException();
