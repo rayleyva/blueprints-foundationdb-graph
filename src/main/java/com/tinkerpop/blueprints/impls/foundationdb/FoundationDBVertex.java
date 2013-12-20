@@ -27,11 +27,11 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	}
 
     @Override
-    public Collection<Edge> getEdges(Direction d, String... labels) {
+    public Iterable<Edge> getEdges(Direction d, String... labels) {
         return getEdges(d, 0, labels);
     }
 
-	public Collection<Edge> getEdges(Direction d, int limit, String... labels) {
+	public Iterable<Edge> getEdges(Direction d, int limit, String... labels) {
 		List<Edge> result;
         if (d.equals(Direction.IN)) result = getDirectionEdges(d, labels);
         else if (d.equals(Direction.OUT)) result = getDirectionEdges(d, labels);
@@ -48,11 +48,11 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	}
 
 	@Override
-    public Collection<Vertex> getVertices(Direction d, String... labels) {
+    public Iterable<Vertex> getVertices(Direction d, String... labels) {
         return getVertices(d, 0, labels);
     }
 
-	public Collection<Vertex> getVertices(Direction d, int limit, String... labels) {
+	public Iterable<Vertex> getVertices(Direction d, int limit, String... labels) {
 		List<Vertex> vertices;
         if (d.equals(Direction.IN) || d.equals(Direction.OUT)) {
             ArrayList<Edge> edges = getDirectionEdges(d, labels);
