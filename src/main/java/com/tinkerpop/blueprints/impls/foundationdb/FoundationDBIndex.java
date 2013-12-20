@@ -4,8 +4,10 @@ import com.foundationdb.KeyValue;
 import com.foundationdb.Range;
 import com.foundationdb.Transaction;
 import com.foundationdb.async.AsyncIterable;
+import com.foundationdb.async.Function;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.impls.foundationdb.util.AsyncUtils;
 import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
 import com.tinkerpop.blueprints.impls.foundationdb.util.Namespace;
 
@@ -42,15 +44,21 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
 
 
     public CloseableIterable<T> get(String key, Object value) {
-        ArrayList<T> items = new ArrayList<T>();
         Transaction tr = g.getTransaction();
         AsyncIterable<KeyValue> existingValues = tr.getRange(Range.startsWith(getRawIndexKey(key, value).build()));
-        for (KeyValue kv : existingValues) {
-            String name = Tuple.fromBytes(kv.getKey()).getString(6);
-            if (this.getIndexClass().equals(Vertex.class)) items.add((T) new FoundationDBVertex(g, name));
-            else if (this.getIndexClass().equals(Edge.class)) items.add((T) new FoundationDBEdge(g, name));
-        }
-        return new FoundationDBCloseableIterable<T>(items.iterator());
+        AsyncIterable<T> it = AsyncUtils.mapIterable(existingValues,
+            new Function<KeyValue, T>() {
+                @Override
+                public T apply(KeyValue kv) {
+                    String name = Tuple.fromBytes(kv.getKey()).getString(6);
+                    if (FoundationDBIndex.this.getIndexClass().equals(Vertex.class)) return (T) new FoundationDBVertex(g, name);
+                    else if (FoundationDBIndex.this.getIndexClass().equals(Edge.class)) return (T) new FoundationDBEdge(g, name);
+                    else throw new RuntimeException();
+                }
+            }
+        );
+
+        return new FoundationDBCloseableIterable<T>(it.iterator());
     }
 
 
