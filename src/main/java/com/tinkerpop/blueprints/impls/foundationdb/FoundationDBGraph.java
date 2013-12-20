@@ -235,9 +235,9 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         if (!hasEdge(e)) throw new IllegalArgumentException("Edge does not exist!");
 
         Transaction tr = getTransaction();
+
         byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.EDGE).add(e).build();
         AsyncIterable<KeyValue> reverseIndexValues = tr.getRange(Range.startsWith(reverseIndexKey));
-
         AsyncIterable<KeyValue> propertyKvs = tr.getRange(Range.startsWith(KeyBuilder.propertyKeyPrefix(this, e).build()));
 
         tr.clear(KeyBuilder.directionKeyPrefix(this, Direction.IN, e.getVertex(Direction.IN)).add(e).build());
@@ -249,7 +249,6 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         for(KeyValue kv : propertyKvs) {
             autoIndexer.autoRemove(e, Tuple.fromBytes(kv.getKey()).getString(5), FoundationDBElement.getPropertyFromTuple(Tuple.fromBytes(kv.getValue())), tr);
         }
-
         tr.clear(Range.startsWith(KeyBuilder.propertyKeyPrefix(this, e).build()));
 
         for (KeyValue kv : reverseIndexValues) {
@@ -264,9 +263,9 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         if (!hasVertex(v)) throw new IllegalArgumentException("Vertex does not exist!");
 
         Transaction tr = getTransaction();
+
         byte[] reverseIndexKey = new KeyBuilder(this).add(Namespace.REVERSE_INDEX).add(Namespace.VERTEX).add(v).build();
         AsyncIterable<KeyValue> reverseIndexValues = tr.getRange(Range.startsWith(reverseIndexKey));
-
         AsyncIterable<KeyValue> propertyKvs = tr.getRange(Range.startsWith(KeyBuilder.propertyKeyPrefix(this, v).build()));
 
         for (Edge e : v.getEdges(Direction.BOTH)) {
@@ -280,7 +279,6 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         for(KeyValue kv : propertyKvs) {
             autoIndexer.autoRemove(v, Tuple.fromBytes(kv.getKey()).getString(5), FoundationDBElement.getPropertyFromTuple(Tuple.fromBytes(kv.getValue())), tr);
         }
-
         tr.clear(Range.startsWith(KeyBuilder.propertyKeyPrefix(this, v).build()));
 
         for (KeyValue kv : reverseIndexValues) {
