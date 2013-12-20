@@ -173,12 +173,15 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	public Iterable<Edge> getEdges(String key, Object value) {
         if (this.hasKeyIndex(key, ElementType.EDGE)) {
             Transaction tr = getTransaction();
-            AsyncIterable<KeyValue> kvs = tr.getRange(Range.startsWith(KeyBuilder.keyIndexKeyDataPrefix(this, ElementType.EDGE, key).addObject(value).build()));
-            ArrayList<Edge> edges = new ArrayList<Edge>();
-            for (KeyValue kv : kvs) {
-                edges.add(new FoundationDBEdge(this, Tuple.fromBytes(kv.getKey()).getString(6)));
-            }
-            return edges;
+            AsyncIterable<KeyValue> keyValueIt = tr.getRange(Range.startsWith(KeyBuilder.keyIndexKeyDataPrefix(this, ElementType.EDGE, key).addObject(value).build()));
+            return AsyncUtils.mapIterable(keyValueIt,
+                    new Function<KeyValue, Edge>() {
+                        @Override
+                        public Edge apply(KeyValue kv) {
+                            return new FoundationDBEdge(FoundationDBGraph.this, Tuple.fromBytes(kv.getKey()).getString(6));
+                        }
+                    }
+            );
         }
         else {
             return new PropertyFilteredIterable<Edge>(key, value, this.getEdges());
@@ -221,12 +224,15 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	public Iterable<Vertex> getVertices(String key, Object value) {
         if (this.hasKeyIndex(key, ElementType.VERTEX)) {
             Transaction tr = getTransaction();
-            AsyncIterable<KeyValue> kvs = tr.getRange(Range.startsWith(KeyBuilder.keyIndexKeyDataPrefix(this, ElementType.VERTEX, key).addObject(value).build()));
-            ArrayList<Vertex> vertices = new ArrayList<Vertex>();
-            for (KeyValue kv : kvs) {
-                vertices.add(new FoundationDBVertex(this, Tuple.fromBytes(kv.getKey()).getString(6)));
-            }
-            return vertices;
+            AsyncIterable<KeyValue> keyValueIt = tr.getRange(Range.startsWith(KeyBuilder.keyIndexKeyDataPrefix(this, ElementType.VERTEX, key).addObject(value).build()));
+            return AsyncUtils.mapIterable(keyValueIt,
+                    new Function<KeyValue, Vertex>() {
+                        @Override
+                        public Vertex apply(KeyValue kv) {
+                            return new FoundationDBVertex(FoundationDBGraph.this, Tuple.fromBytes(kv.getKey()).getString(6));
+                        }
+                    }
+            );
         }
         else {
             return new PropertyFilteredIterable<Vertex>(key, value, this.getVertices());
