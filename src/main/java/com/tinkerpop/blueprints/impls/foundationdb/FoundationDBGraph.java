@@ -5,6 +5,7 @@ import java.util.*;
 import com.foundationdb.*;
 import com.foundationdb.async.AsyncIterable;
 import com.foundationdb.async.Function;
+import com.foundationdb.async.Future;
 import com.tinkerpop.blueprints.*;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.impls.foundationdb.util.*;
@@ -206,6 +207,30 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         return tr.get(new KeyBuilder(this).add(Namespace.EDGE).add(e).build()).get() != null;
     }
 
+    private Future<Boolean> hasVertexAsync(Vertex v) {
+        Transaction tr = getTransaction();
+        return tr.get(new KeyBuilder(this).add(Namespace.VERTEX).add(v).build()).map(
+            new Function<byte[], Boolean>() {
+                @Override
+                public Boolean apply(byte[] val) {
+                    return val != null;
+                }
+            }
+        );
+    }
+
+    private Future<Boolean> hasEdgeAsync(Edge e) {
+        Transaction tr = getTransaction();
+        return tr.get(new KeyBuilder(this).add(Namespace.EDGE).add(e).build()).map(
+                new Function<byte[], Boolean>() {
+                    @Override
+                    public Boolean apply(byte[] val) {
+                        return val != null;
+                    }
+                }
+        );
+    }
+
 	@Override
 	public Iterable<Vertex> getVertices() {
         Transaction tr = getTransaction();
@@ -247,7 +272,6 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	@Override
 	public void removeEdge(Edge e) {
         if (!hasEdge(e)) throw new IllegalArgumentException("Edge does not exist!");
-
         _removeEdge(e);
 	}
 
