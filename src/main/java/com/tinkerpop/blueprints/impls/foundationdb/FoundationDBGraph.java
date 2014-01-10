@@ -395,7 +395,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 
 
     public <T extends Element> void createKeyIndex(String key, Class<T> elementClass, final Parameter... indexParameters) {
-        if (this.hasKeyIndex(key, FoundationDBGraphUtils.getElementType(elementClass))) throw new IllegalArgumentException();
+        if (this.hasKeyIndex(key, FoundationDBGraphUtils.getElementType(elementClass))) throw new IllegalArgumentException("Index on " + key + " already exists.");
         Transaction tr = getTransaction();
         tr.set(new KeyBuilder(this).add(Namespace.KEY_INDEX).add(elementClass).add(key).build(), "".getBytes());
         autoIndexer.reindexElements(key, elementClass, tr);
