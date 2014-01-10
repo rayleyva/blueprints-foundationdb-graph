@@ -89,6 +89,11 @@ public class FoundationDBGraphTest extends GraphTest {
         return g;
     }
 
+    @Override
+    public void dropGraph(final String graphName) {
+        new FoundationDBGraph(graphName).purge();
+    }
+
     public void purgeTest() {
         FoundationDBGraph g = new FoundationDBGraph("graphTest");
         g.purge();
