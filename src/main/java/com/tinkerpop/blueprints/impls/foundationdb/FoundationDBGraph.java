@@ -271,7 +271,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 
 	@Override
 	public void removeEdge(Edge e) {
-        if (!hasEdge(e)) throw new IllegalArgumentException("Edge does not exist!");
+        if (!hasEdge(e)) throw new IllegalStateException("Edge does not exist!");
         _removeEdge(e);
 	}
 
@@ -302,7 +302,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 
 	@Override
 	public void removeVertex(Vertex v) {
-        if (!hasVertex(v)) throw new IllegalArgumentException("Vertex does not exist!");
+        if (!hasVertex(v)) throw new IllegalStateException("Vertex does not exist!");
 
         Transaction tr = getTransaction();
 
@@ -388,6 +388,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 
 
     public <T extends Element> void dropKeyIndex(String key, Class<T> elementClass) {
+        if(elementClass == null) throw new IllegalArgumentException("Cannot remove index of null element class.");
         Transaction tr = getTransaction();
         tr.clear(new KeyBuilder(this).add(Namespace.KEY_INDEX).add(elementClass).add(key).build());
         tr.clear(Range.startsWith(KeyBuilder.keyIndexKeyDataPrefix(this, FoundationDBGraphUtils.getElementType(elementClass), key).build()));
@@ -395,6 +396,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 
 
     public <T extends Element> void createKeyIndex(String key, Class<T> elementClass, final Parameter... indexParameters) {
+        if(elementClass == null) throw new IllegalArgumentException("Cannot create index with null element class.");
         if (this.hasKeyIndex(key, FoundationDBGraphUtils.getElementType(elementClass))) throw new IllegalArgumentException("Index on " + key + " already exists.");
         Transaction tr = getTransaction();
         tr.set(new KeyBuilder(this).add(Namespace.KEY_INDEX).add(elementClass).add(key).build(), "".getBytes());
@@ -403,6 +405,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 
     public final <T extends Element> Set<String> getIndexedKeys(Class<T> elementClass) {
         Set<String> keyIndices = new TreeSet<String>();
+        if(elementClass == null) throw new IllegalArgumentException("Cannot get indexed keys of null element class.");
         if(elementClass.equals(Vertex.class) || elementClass.equals(Edge.class)) {
             AsyncIterable<KeyValue> kvs = getTransaction().getRange(Range.startsWith(new KeyBuilder(this).add(Namespace.KEY_INDEX).add(elementClass).build()));
             for (KeyValue kv : kvs) {
@@ -410,7 +413,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
             }
             return keyIndices;
         }
-        else throw new IllegalArgumentException();
+        else throw new IllegalArgumentException("Unrecognized element class.");
     }
 
     public boolean hasKeyIndex(String key, ElementType type) {
