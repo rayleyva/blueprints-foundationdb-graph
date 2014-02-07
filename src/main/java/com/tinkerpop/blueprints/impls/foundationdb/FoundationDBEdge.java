@@ -1,6 +1,8 @@
 package com.tinkerpop.blueprints.impls.foundationdb;
 
 import com.foundationdb.Transaction;
+import com.foundationdb.async.Function;
+import com.foundationdb.async.Future;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
@@ -33,6 +35,22 @@ public class FoundationDBEdge extends FoundationDBElement implements Edge {
         }
         else throw new IllegalArgumentException();
 	}
+
+    public Future<Vertex> getVertexAsync(Direction direction) throws IllegalArgumentException {
+        if (direction.equals(Direction.IN) || direction.equals((Direction.OUT))) {
+            Transaction tr = g.getTransaction();
+            String vertexID = new String(tr.get(KeyBuilder.directionKeyPrefix(g, direction, this).build()).get());
+            Future<byte[]> f = tr.get(KeyBuilder.directionKeyPrefix(g, direction, this).build());
+            Future<Vertex> v = f.map(new Function<byte[], Vertex>() {
+                @Override
+                public Vertex apply(byte[] bytes) {
+                    return new FoundationDBVertex(g, new String(bytes));
+                }
+            });
+            return v;
+        }
+        else throw new IllegalArgumentException();
+    }
 
     @Override
     public void remove() {
