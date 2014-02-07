@@ -5,11 +5,11 @@ import java.util.*;
 import com.foundationdb.KeyValue;
 import com.foundationdb.Range;
 import com.foundationdb.async.AsyncIterable;
+import com.google.common.collect.Iterables;
 import com.tinkerpop.blueprints.*;
 import com.foundationdb.tuple.Tuple;
 import com.foundationdb.Transaction;
 import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
-import com.tinkerpop.blueprints.impls.foundationdb.util.Namespace;
 
 public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	public FoundationDBVertex(FoundationDBGraph g, String vID) {
@@ -32,17 +32,16 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
     }
 
 	public Iterable<Edge> getEdges(Direction d, int limit, String... labels) {
-		List<Edge> result;
+        Iterable<Edge> result;
         if (d.equals(Direction.IN)) result = getDirectionEdges(d, labels);
         else if (d.equals(Direction.OUT)) result = getDirectionEdges(d, labels);
         else  {
-            ArrayList<Edge> inEdges = getDirectionEdges(Direction.IN, labels);
-            ArrayList<Edge> outEdges = getDirectionEdges(Direction.OUT, labels);
-            inEdges.addAll(outEdges);
-            result = inEdges;
+            Iterable<Edge> inEdges = getDirectionEdges(Direction.IN, labels);
+            Iterable<Edge> outEdges = getDirectionEdges(Direction.OUT, labels);
+            result = Iterables.concat(inEdges, outEdges);
         }
 
-        if (limit != 0) result = result.subList(0, limit);
+        if (limit != 0) result = Iterables.limit(result, limit);
 
         return result;
 	}
@@ -55,15 +54,15 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	public Iterable<Vertex> getVertices(Direction d, int limit, String... labels) {
 		List<Vertex> vertices;
         if (d.equals(Direction.IN) || d.equals(Direction.OUT)) {
-            ArrayList<Edge> edges = getDirectionEdges(d, labels);
+            Iterable<Edge> edges = getDirectionEdges(d, labels);
             vertices = new ArrayList<Vertex>();
             for (Edge e : edges) {
                 vertices.add(e.getVertex(d.opposite()));
             }
         }
         else {
-            ArrayList<Edge> inEdges = getDirectionEdges(Direction.IN, labels);
-            ArrayList<Edge> outEdges = getDirectionEdges(Direction.OUT, labels);
+            Iterable<Edge> inEdges = getDirectionEdges(Direction.IN, labels);
+            Iterable<Edge> outEdges = getDirectionEdges(Direction.OUT, labels);
             vertices = new ArrayList<Vertex>();
             for (Edge e : inEdges) {
                 vertices.add(e.getVertex(Direction.OUT));
@@ -83,7 +82,7 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 		return new FoundationDBVertexQuery(this);
 	}
 
-    private ArrayList<Edge> getDirectionEdges(final Direction d, final String... labels) {
+    private Iterable<Edge> getDirectionEdges(final Direction d, final String... labels) {
         ArrayList<Edge> edges = new ArrayList<Edge>();
         Transaction tr = g.getTransaction();
         AsyncIterable<KeyValue> edgeKeys = tr.getRange(Range.startsWith(KeyBuilder.directionKeyPrefix(g, d, this).build()));
