@@ -5,11 +5,17 @@ import java.util.*;
 import com.foundationdb.KeyValue;
 import com.foundationdb.Range;
 import com.foundationdb.async.AsyncIterable;
+import com.foundationdb.async.AsyncUtil;
+import com.foundationdb.async.Function;
+import com.google.common.base.*;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.tinkerpop.blueprints.*;
 import com.foundationdb.tuple.Tuple;
 import com.foundationdb.Transaction;
 import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
+
+import javax.annotation.Nullable;
 
 public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	public FoundationDBVertex(FoundationDBGraph g, String vID) {
@@ -83,26 +89,20 @@ public class FoundationDBVertex extends FoundationDBElement implements Vertex {
 	}
 
     private Iterable<Edge> getDirectionEdges(final Direction d, final String... labels) {
-        ArrayList<Edge> edges = new ArrayList<Edge>();
         Transaction tr = g.getTransaction();
         AsyncIterable<KeyValue> edgeKeys = tr.getRange(Range.startsWith(KeyBuilder.directionKeyPrefix(g, d, this).build()));
-        for (KeyValue kv : edgeKeys) {
-            FoundationDBEdge e = new FoundationDBEdge(g, Tuple.fromBytes(kv.getKey()).getString(5));
-            if (labels == null || labels.length == 0) {
-                edges.add(e);
+        AsyncIterable<Edge> edges = AsyncUtil.mapIterable(edgeKeys, new Function<KeyValue, Edge>() {
+            @Override
+            public Edge apply(KeyValue kv) {
+                return new FoundationDBEdge(g, Tuple.fromBytes(kv.getKey()).getString(5));
             }
-            else if (labels.length == 1) {
-                if (e.getLabel().equals(labels[0])) {
-                    edges.add(e);
-                }
+        });
+        return Iterables.filter(edges, new Predicate<Edge>() {
+            @Override
+            public boolean apply(@Nullable Edge e) {
+                return (labels == null || labels.length == 0 || (labels.length == 1 && e.getLabel().equals(labels[0])) || Arrays.asList(labels).contains(e.getLabel()));
             }
-            else {
-                if (Arrays.asList(labels).contains(e.getLabel())) {
-                    edges.add(e);
-                }
-            }
-        }
-        return edges;
+        });
     }
 
     @Override
