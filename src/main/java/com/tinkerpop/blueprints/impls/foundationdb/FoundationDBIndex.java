@@ -5,9 +5,9 @@ import com.foundationdb.Range;
 import com.foundationdb.Transaction;
 import com.foundationdb.async.AsyncIterable;
 import com.foundationdb.async.Function;
+import com.foundationdb.async.AsyncUtil;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.*;
-import com.tinkerpop.blueprints.impls.foundationdb.util.AsyncUtils;
 import com.tinkerpop.blueprints.impls.foundationdb.util.KeyBuilder;
 import com.tinkerpop.blueprints.impls.foundationdb.util.Namespace;
 
@@ -46,7 +46,7 @@ public class FoundationDBIndex<T extends Element> implements Index<T> {
     public CloseableIterable<T> get(String key, Object value) {
         Transaction tr = g.getTransaction();
         AsyncIterable<KeyValue> existingValues = tr.getRange(Range.startsWith(getRawIndexKey(key, value).build()));
-        AsyncIterable<T> it = AsyncUtils.mapIterable(existingValues,
+        AsyncIterable<T> it = AsyncUtil.mapIterable(existingValues,
             new Function<KeyValue, T>() {
                 @Override
                 public T apply(KeyValue kv) {

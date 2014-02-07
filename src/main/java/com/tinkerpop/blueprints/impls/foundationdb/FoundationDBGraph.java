@@ -6,6 +6,7 @@ import com.foundationdb.*;
 import com.foundationdb.async.AsyncIterable;
 import com.foundationdb.async.Function;
 import com.foundationdb.async.Future;
+import com.foundationdb.async.AsyncUtil;
 import com.tinkerpop.blueprints.*;
 import com.foundationdb.tuple.Tuple;
 import com.tinkerpop.blueprints.impls.foundationdb.util.*;
@@ -160,7 +161,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	public Iterable<Edge> getEdges() {
         Transaction tr = getTransaction();
         AsyncIterable<KeyValue> keyValueIt = tr.getRange(Range.startsWith(new KeyBuilder(this).add(Namespace.EDGE).build()));
-        return AsyncUtils.mapIterable(keyValueIt,
+        return AsyncUtil.mapIterable(keyValueIt,
             new Function<KeyValue, Edge>() {
                 @Override
                 public Edge apply(KeyValue kv) {
@@ -175,7 +176,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         if (this.hasKeyIndex(key, ElementType.EDGE)) {
             Transaction tr = getTransaction();
             AsyncIterable<KeyValue> keyValueIt = tr.getRange(Range.startsWith(KeyBuilder.keyIndexKeyDataPrefix(this, ElementType.EDGE, key).addObject(value).build()));
-            return AsyncUtils.mapIterable(keyValueIt,
+            return AsyncUtil.mapIterable(keyValueIt,
                     new Function<KeyValue, Edge>() {
                         @Override
                         public Edge apply(KeyValue kv) {
@@ -235,7 +236,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
 	public Iterable<Vertex> getVertices() {
         Transaction tr = getTransaction();
         AsyncIterable<KeyValue> keyValueIt = tr.getRange(Range.startsWith(new KeyBuilder(this).add(Namespace.VERTEX).build()));
-        return AsyncUtils.mapIterable(keyValueIt,
+        return AsyncUtil.mapIterable(keyValueIt,
             new Function<KeyValue, Vertex>() {
                 @Override
                 public Vertex apply(KeyValue kv) {
@@ -250,7 +251,7 @@ public class FoundationDBGraph implements KeyIndexableGraph, IndexableGraph, Tra
         if (this.hasKeyIndex(key, ElementType.VERTEX)) {
             Transaction tr = getTransaction();
             AsyncIterable<KeyValue> keyValueIt = tr.getRange(Range.startsWith(KeyBuilder.keyIndexKeyDataPrefix(this, ElementType.VERTEX, key).addObject(value).build()));
-            return AsyncUtils.mapIterable(keyValueIt,
+            return AsyncUtil.mapIterable(keyValueIt,
                     new Function<KeyValue, Vertex>() {
                         @Override
                         public Vertex apply(KeyValue kv) {
