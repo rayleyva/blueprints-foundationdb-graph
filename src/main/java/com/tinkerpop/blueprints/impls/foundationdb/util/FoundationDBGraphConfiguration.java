@@ -3,6 +3,7 @@ package com.tinkerpop.blueprints.impls.foundationdb.util;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.impls.foundationdb.FoundationDBGraph;
 import com.tinkerpop.rexster.config.GraphConfiguration;
+import com.tinkerpop.rexster.config.GraphConfigurationContext;
 import com.tinkerpop.rexster.config.GraphConfigurationException;
 import org.apache.commons.configuration.Configuration;
 
@@ -16,8 +17,9 @@ import org.apache.commons.configuration.Configuration;
 
 public class FoundationDBGraphConfiguration implements GraphConfiguration {
 
-    public Graph configureGraphInstance(final Configuration config) throws GraphConfigurationException {
+    public Graph configureGraphInstance(final GraphConfigurationContext context) throws GraphConfigurationException {
         try {
+            final Configuration config = context.getProperties();
             final String graphName = config.getString("graph-name");
             final String graphFile = config.getString("saved-graph-file", null);
             if (graphFile == null)
